@@ -22,9 +22,7 @@ class TapHelper(context: Context): View.OnTouchListener {
     override fun onDown(e: MotionEvent?): Boolean = true
   })
 
-  fun poll(): MotionEvent? {
-    return queuedSingleTaps.poll()
-  }
+  fun poll(): MotionEvent? = queuedSingleTaps.poll()
 
   @SuppressLint("ClickableViewAccessibility")
   override fun onTouch(v: View?, event: MotionEvent?): Boolean {

@@ -4,6 +4,7 @@ import android.graphics.Color
 
 object Constants {
     const val PERMISSION_REQUEST_CODE = 101
+
     val PERMISSION_ARRAY = arrayOf(
         android.Manifest.permission.BLUETOOTH,
         android.Manifest.permission.BLUETOOTH_ADMIN,

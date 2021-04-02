@@ -1,6 +1,8 @@
 package com.whoissio.arthings.src.viewmodels
 
 import android.app.Application
+import android.bluetooth.le.ScanFilter
+import android.bluetooth.le.ScanSettings
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CaptureRequest

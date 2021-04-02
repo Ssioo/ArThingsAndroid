@@ -33,12 +33,8 @@ class BleSignalScanner: ScanCallback(), IBleSignalScanner {
   override fun register(onReceive: (ScanResult) -> Unit, onError: ((Throwable) -> Unit)?) {
     if (disposable.size() > 0)
       disposable.clear()
-    disposable.add(prov.subscribe({
-      onReceive(it)
-    }, {
-      it.printStackTrace()
-      onError?.invoke(it)
-    }))
+    prov.subscribe(onReceive, { onError?.invoke(it) })
+      .also { disposable.add(it) }
   }
 
   override fun onCleared() {

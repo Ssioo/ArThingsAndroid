@@ -15,6 +15,7 @@ import com.google.gson.reflect.TypeToken
 import com.whoissio.arthings.R
 import com.whoissio.arthings.databinding.ActivityBleResultBinding
 import com.whoissio.arthings.src.BaseActivity
+import com.whoissio.arthings.src.models.ChartMode
 import com.whoissio.arthings.src.models.Device
 import com.whoissio.arthings.src.models.DeviceInfo
 import com.whoissio.arthings.src.models.RssiTimeStamp
@@ -25,17 +26,15 @@ import java.util.*
 
 class BleResultActivity :
   BaseActivity<ActivityBleResultBinding, BleResultViewModel>(R.layout.activity_ble_result) {
+
   override fun initView(savedInstanceState: Bundle?) {
+    /* Set On Click Listener */
     binding.btnExport.setOnClickListener { onClickExport() }
     binding.btnRefresh.setOnClickListener { refreshChartData(vm.chartDataSet.value) }
 
-    /* Init ChartView */
-    binding.bleResultChart.apply {
-
-    }
-
     /* Data Observing */
     vm.chartDataSet.observe(this) { refreshChartData(it) }
+    vm.chartMode.observe(this) { onChangeChartMode(it) }
   }
 
   private fun refreshChartData(it: LineData?) {
@@ -44,6 +43,17 @@ class BleResultActivity :
       invalidate()
     }
   }
+
+  private fun onChangeChartMode(mode: ChartMode) {
+    binding.bleResultChart.apply {
+      data = when (mode) {
+        ChartMode.RAW -> vm.chartDataSet.value
+        ChartMode.SMOOTH -> vm.kalManchartDataSet.value
+      }
+      invalidate()
+    }
+  }
+
 
   private fun onClickExport() {
     try {
@@ -56,11 +66,16 @@ class BleResultActivity :
       bitmap.compress(Bitmap.CompressFormat.PNG, 90, stream)
       stream.close()
       val uri = FileProvider.getUriForFile(this, "com.whoissio.arthings.fileprovider", file)
-      startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
-        putExtra(Intent.EXTRA_STREAM, uri)
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        type = "image/png"
-      }, null))
+      startActivity(
+        Intent.createChooser(
+          Intent(Intent.ACTION_SEND).apply {
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            type = "image/png"
+          },
+          "${vm.scannedDevices.value?.size}개의 스캔된 디바이스 데이터 전송"
+        )
+      )
     } catch (e: Exception) {
       e.printStackTrace()
     }
