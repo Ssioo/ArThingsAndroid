@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="vm"
+            type="com.whoissio.arthings.src.viewmodels.MainViewModel" />
+    </data>
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".src.views.MainActivity">
+
+        <android.opengl.GLSurfaceView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/gv_main" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FFF"
+            tools:text="[ DEPTH: ToF ]"
+            android:text="@{vm.isDepthApiEnabled ? `[ DEPTH: ToF ]` : `[ DEPTH: SLAM ]`}"
+            android:textStyle="bold"
+            android:layout_gravity="center|top"
+            android:layout_marginTop="10dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_export"
+            android:text="SUMMARY"
+            android:letterSpacing="0"
+            android:insetRight="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:insetLeft="0dp"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:paddingVertical="6dp"
+            android:paddingHorizontal="28dp"
+            app:cornerRadius="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center"
+            android:layout_marginBottom="20dp" />
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+</layout>
