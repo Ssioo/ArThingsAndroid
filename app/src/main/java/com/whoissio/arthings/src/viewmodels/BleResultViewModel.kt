@@ -57,7 +57,7 @@ class BleResultViewModel(application: Application, scannedDevices: List<DeviceIn
     kalManchartDataSet.value = LineData(
       scannedDevices.toList()
         .map {
-          KalmanFilteredList(it.data.map { it.value }, it.data.map { it.key }, null, it.address)
+          KalmanFilteredList(it.data.map { it.value }, it.data.map { it.key }, it.address, null)
         }
         .mapIndexed { idx, it ->
           LineDataSet(

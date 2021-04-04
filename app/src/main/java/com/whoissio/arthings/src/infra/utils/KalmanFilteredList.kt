@@ -3,14 +3,12 @@ package com.whoissio.arthings.src.infra.utils
 open class KalmanFilteredList(
   data: List<Number>,
   indices: List<Any> = listOf(),
+  var tag: Any? = null,
   observer: ((List<Number>) -> Unit)? = null,
-  tag: Any? = null
 ) : IKalmanFilter {
   val kalmanConstant = 0.6
   val smoothedData: ArrayList<Number> = arrayListOf()
-  var tag: Any? = null
 
-  val customIndices: ArrayList<Any?> = arrayListOf()
   private val rawData: ArrayList<Number> = arrayListOf()
   private val subscribers: MutableList<(List<Number>) -> Unit> = mutableListOf()
 
@@ -101,6 +99,7 @@ open class KalmanFilteredList(
 
 interface IKalmanFilter {
   val size: Int get() = 0
+  val customIndices: ArrayList<Any?> get() = arrayListOf()
 
   val hasObserver: Boolean get() = false
 
