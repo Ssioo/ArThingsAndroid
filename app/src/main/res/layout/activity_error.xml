@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <ImageView
+        android:id="@+id/iv_fixing"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_fixing"
+        android:layout_marginTop="60dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="일시적으로 페이지를 불러올 수 없습니다"
+        android:textAlignment="center"
+        android:id="@+id/tv_sorry"
+        android:layout_marginTop="20dp"
+        android:textColor="#333"
+        android:textStyle="bold"
+        android:paddingHorizontal="20dp"
+        android:textSize="18sp"
+        app:layout_constraintTop_toBottomOf="@id/iv_fixing"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:layout_width="0dp"
+        android:paddingHorizontal="20dp"
+        android:layout_height="wrap_content"
+        android:text="새로고침을 눌러 이전 페이지를 다시 불러올 수 있습니다.\n문제가 반복된다면 이 화면을 개발자에게 전달해주세요."
+        android:textAlignment="center"
+        android:id="@+id/tv_sorry_desc"
+        android:textColor="#333"
+        android:textSize="14sp"
+        app:layout_constraintTop_toBottomOf="@id/tv_sorry"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <com.google.android.material.button.MaterialButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="새로고침"
+        android:letterSpacing="0"
+        app:cornerRadius="20dp"
+        android:minWidth="140dp"
+        android:minHeight="0dp"
+        android:paddingVertical="6dp"
+        android:paddingHorizontal="12dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:layout_marginTop="20dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/sv_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginBottom="20dp"
+        android:id="@+id/btn_refresh" />
+
+    <ScrollView
+        android:id="@+id/sv_content"
+        android:layout_width="match_parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_sorry_desc"
+        android:layout_marginTop="12dp"
+        android:paddingHorizontal="20dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/btn_refresh"
+        android:layout_height="0dp">
+        <TextView
+            android:id="@+id/tv_stack"
+            tools:text="@tools:sample/lorem/random"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </ScrollView>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

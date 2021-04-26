@@ -4,9 +4,11 @@ import android.app.Application
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.BluetoothLeScanner
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.orhanobut.logger.AndroidLogAdapter
 import com.orhanobut.logger.Logger
 import com.orhanobut.logger.PrettyFormatStrategy
+import com.whoissio.arthings.src.infra.core.MainErrorHandler
 
 class ApplicationClass: Application() {
 

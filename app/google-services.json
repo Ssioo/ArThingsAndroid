@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "597038536501",
+    "firebase_url": "https://nnadhocble-default-rtdb.firebaseio.com",
+    "project_id": "nnadhocble",
+    "storage_bucket": "nnadhocble.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:597038536501:android:1634503cc6c7fe211c5e7c",
+        "android_client_info": {
+          "package_name": "com.whoissio.arthings"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "597038536501-9blk93keqevktti7iivqk2qbimcbal93.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.whoissio.arthings",
+            "certificate_hash": "eecced445bdc86aaa047b545fbfa9526d13a7b0c"
+          }
+        },
+        {
+          "client_id": "597038536501-ujk5p0i7gbpfjsv929393umioo6rmq81.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWAjEhsVaYfMTBiB6XAllGglrdFMfqKCE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "597038536501-ujk5p0i7gbpfjsv929393umioo6rmq81.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

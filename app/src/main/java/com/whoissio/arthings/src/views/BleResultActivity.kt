@@ -3,9 +3,8 @@ package com.whoissio.arthings.src.views
 import android.app.Application
 import android.content.Intent
 import android.graphics.Bitmap
-import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
+import android.view.LayoutInflater
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -16,16 +15,23 @@ import com.whoissio.arthings.R
 import com.whoissio.arthings.databinding.ActivityBleResultBinding
 import com.whoissio.arthings.src.BaseActivity
 import com.whoissio.arthings.src.models.ChartMode
-import com.whoissio.arthings.src.models.Device
 import com.whoissio.arthings.src.models.DeviceInfo
-import com.whoissio.arthings.src.models.RssiTimeStamp
 import com.whoissio.arthings.src.viewmodels.BleResultViewModel
 import java.io.File
 import java.io.FileOutputStream
 import java.util.*
 
 class BleResultActivity :
-  BaseActivity<ActivityBleResultBinding, BleResultViewModel>(R.layout.activity_ble_result) {
+  BaseActivity.DBActivity<ActivityBleResultBinding, BleResultViewModel>(R.layout.activity_ble_result) {
+
+  override val bindingProvider: (LayoutInflater) -> ActivityBleResultBinding =
+    ActivityBleResultBinding::inflate
+  override val vmProvider: () -> BleResultViewModel = {
+    ViewModelProvider(
+      this,
+      BleResultViewModelFactory(application, intent.getStringExtra("Data"))
+    ).get(BleResultViewModel::class.java)
+  }
 
   override fun initView(savedInstanceState: Bundle?) {
     /* Set On Click Listener */
@@ -90,11 +96,6 @@ class BleResultActivity :
       }, null)
     )*/
   }
-
-  override fun getViewModel(): BleResultViewModel = ViewModelProvider(
-    this,
-    BleResultViewModelFactory(application, intent.getStringExtra("Data"))
-  ).get(BleResultViewModel::class.java)
 
   inner class BleResultViewModelFactory(
     private val application: Application,

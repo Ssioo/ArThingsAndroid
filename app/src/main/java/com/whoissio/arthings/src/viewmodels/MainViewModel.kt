@@ -9,6 +9,7 @@ import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.TotalCaptureResult
 import android.os.Build
 import androidx.lifecycle.MutableLiveData
+import com.google.ar.core.Anchor
 import com.orhanobut.logger.Logger
 import com.whoissio.arthings.ApplicationClass.Companion.scanner
 import com.whoissio.arthings.src.BaseViewModel
@@ -67,7 +68,7 @@ class MainViewModel(application: Application) : BaseViewModel(application) {
 
   /* Variables for Camera */
   var keysThatCanCauseCaptureDelaysWhenModified = mutableListOf<CaptureRequest.Key<*>>()
-  val anchors: ArrayList<ColoredAnchor> = arrayListOf()
+  val anchors: ArrayList<Anchor> = arrayListOf()
   val shouldUpdateSurfaceTexture = AtomicBoolean(false)
   var cameraDevice: CameraDevice? = null
 
