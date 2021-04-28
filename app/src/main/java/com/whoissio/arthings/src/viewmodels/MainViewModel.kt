@@ -1,8 +1,6 @@
 package com.whoissio.arthings.src.viewmodels
 
 import android.app.Application
-import android.bluetooth.le.ScanFilter
-import android.bluetooth.le.ScanSettings
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CaptureRequest
@@ -15,7 +13,6 @@ import com.whoissio.arthings.ApplicationClass.Companion.scanner
 import com.whoissio.arthings.src.BaseViewModel
 import com.whoissio.arthings.src.infra.Constants
 import com.whoissio.arthings.src.infra.utils.BleSignalScanner
-import com.whoissio.arthings.src.models.ColoredAnchor
 import com.whoissio.arthings.src.models.Device
 import com.whoissio.arthings.src.models.RssiTimeStamp
 import java.util.concurrent.atomic.AtomicBoolean
@@ -27,6 +24,9 @@ class MainViewModel(application: Application) : BaseViewModel(application) {
   var isScanning = false
   val scannedDevices: MutableLiveData<Map<Device, RssiTimeStamp>> = MutableLiveData(mapOf())
   val isDepthApiEnabled = MutableLiveData(false)
+
+  val humidity: MutableLiveData<Double> = MutableLiveData()
+  val temperature: MutableLiveData<Double> = MutableLiveData()
 
   fun resumeScanBle() {
     if (isScanning) return
@@ -49,8 +49,8 @@ class MainViewModel(application: Application) : BaseViewModel(application) {
       // For Debug
       if (it.device.address == Constants.SAMPLE_NODE_MAC_ADDRESS) {
         it.scanRecord?.bytes?.let {
-          val humidity = 125 * (it.getOrNull(27) ?: 0) * 256.0 / 65536 - 6
-          val temperature = 175.72 * (it.getOrNull(28) ?: 0) * 256 / 65536 - 46.85
+          humidity.value = 125 * (it.getOrNull(27) ?: 0) * 256.0 / 65536 - 6
+          temperature.value = 175.72 * (it.getOrNull(28) ?: 0) * 256 / 65536 - 46.85
           Logger.d("Humidity: $humidity% Temp: $temperature℃")
         }
       }

@@ -31,6 +31,7 @@
         </activity>
         <activity android:name=".src.views.BleResultActivity" />
         <activity android:name=".src.views.ErrorActivity" />
+        <activity android:name=".src.views.NodeManageActivity" />
 
         <provider
             android:authorities="com.whoissio.arthings.fileprovider"

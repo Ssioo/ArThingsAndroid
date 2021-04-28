@@ -13,11 +13,12 @@ object Constants {
         android.Manifest.permission.CAMERA,
     )
 
-    val QUAD_COORDS = floatArrayOf(-1f, -1f, +1f, -1f, -1f, +1f, +1f, +1f)
-
     const val SAMPLE_NODE_MAC_ADDRESS = "00:A0:50:17:2B:14"
 
     val COLOR_SET = listOf(Color.BLACK, Color.RED, Color.BLUE, Color.CYAN, Color.GRAY, Color.GREEN, Color.MAGENTA, Color.YELLOW, Color.DKGRAY, Color.LTGRAY)
 
-    val GLTF_SOLAR_PATH = "file:///android_asset/models/solar_battery_2.gltf"
+    const val GLTF_SOLAR_PATH = "file:///android_asset/models/solar_battery_2.gltf"
+    const val GLTF_RF_PATH = "file:///android_asset/models/rf_module.gltf"
+    const val GLTF_SOLAR_SCALE = 0.00008f
+    const val GLTF_RF_SCALE = 0.003f
 }

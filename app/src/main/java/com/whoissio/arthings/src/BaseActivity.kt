@@ -11,12 +11,14 @@ import androidx.viewbinding.ViewBinding
 import com.google.android.material.snackbar.Snackbar
 import com.whoissio.arthings.BR
 
-sealed class BaseActivity: AppCompatActivity() {
-  abstract class DBActivity<B: ViewDataBinding, VM: BaseViewModel>(@LayoutRes val layoutId: Int): BaseActivity() {
+sealed class BaseActivity<B>: AppCompatActivity() {
+  protected abstract val bindingProvider: (LayoutInflater) -> B
+
+  abstract class DBActivity<B: ViewDataBinding, VM: BaseViewModel>(@LayoutRes val layoutId: Int): BaseActivity<B>() {
     protected lateinit var binding: B
+
     protected lateinit var vm: VM
 
-    protected abstract val bindingProvider: (LayoutInflater) -> B
     protected abstract val vmProvider: () -> VM
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,10 +31,8 @@ sealed class BaseActivity: AppCompatActivity() {
     }
   }
 
-  abstract class VBActivity<B: ViewBinding>: BaseActivity() {
+  abstract class VBActivity<B: ViewBinding>: BaseActivity<B>() {
     protected lateinit var binding: B
-
-    protected abstract val bindingProvider: (LayoutInflater) -> B
 
     override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
