@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="vm"
+            type="com.whoissio.arthings.src.viewmodels.HomeViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:background="@color/light"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/logo_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ArThings"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="@color/dark"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintVertical_chainStyle="packed"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/user_id"/>
+
+        <EditText
+            android:id="@+id/user_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginHorizontal="20dp"
+            android:background="@drawable/bg_transparent_stroke_1_lightgrey_corner_10"
+            android:textSize="14sp"
+            android:textColor="@color/dark"
+            android:hint="Email"
+            android:layout_marginTop="24dp"
+            android:textColorHint="@color/light_grey"
+            android:text="@={vm.userId}"
+            android:inputType="text"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="12dp"
+            app:layout_constraintBottom_toTopOf="@id/user_pwd"
+            app:layout_constraintTop_toBottomOf="@id/logo_text" />
+
+        <EditText
+            android:id="@+id/user_pwd"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginHorizontal="20dp"
+            android:inputType="textPassword"
+            android:background="@drawable/bg_transparent_stroke_1_lightgrey_corner_10"
+            android:hint="Password"
+            android:textColorHint="@color/light_grey"
+            android:textSize="14sp"
+            android:textColor="@color/dark"
+            android:layout_marginTop="8dp"
+            android:text="@={vm.userPwd}"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="12dp"
+            app:layout_constraintTop_toBottomOf="@id/user_id"
+            app:layout_constraintBottom_toTopOf="@id/btn_sign_in" />
+
+        <com.google.android.material.button.MaterialButton
+            style="@style/Widget.MaterialComponents.Button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:layout_marginTop="20dp"
+            android:paddingVertical="8dp"
+            app:cornerRadius="10dp"
+            app:layout_constraintTop_toBottomOf="@id/user_pwd"
+            app:layout_constraintBottom_toTopOf="@id/btn_guest"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginHorizontal="20dp"
+            android:letterSpacing="0"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            android:id="@+id/btn_sign_in"
+            android:text="SIGN IN" />
+
+        <com.google.android.material.button.MaterialButton
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingVertical="8dp"
+            android:paddingHorizontal="12dp"
+            app:cornerRadius="10dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:textSize="14sp"
+            android:textAllCaps="false"
+            app:layout_constraintTop_toBottomOf="@id/btn_sign_in"
+            android:letterSpacing="0"
+            android:layout_marginTop="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginHorizontal="20dp"
+            android:id="@+id/btn_guest"
+            android:text="ENTER GUEST" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

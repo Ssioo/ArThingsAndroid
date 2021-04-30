@@ -6,25 +6,20 @@
     <data>
         <variable
             name="vm"
-            type="com.whoissio.arthings.src.viewmodels.MainViewModel" />
+            type="com.whoissio.arthings.src.viewmodels.ArViewModel" />
     </data>
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:id="@+id/container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".src.views.MainActivity">
-
-        <!--<android.opengl.GLSurfaceView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:id="@+id/gv_main" />-->
+        tools:context=".src.views.ArActivity">
 
         <fragment
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/ar_view"
-            android:name="com.whoissio.arthings.src.infra.utils.MyArFragment" />
+            android:name="com.whoissio.arthings.src.views.components.MyArFragment" />
 
         <TextView
             android:layout_width="wrap_content"

@@ -10,6 +10,9 @@ import android.view.View
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.whoissio.arthings.src.infra.Constants.PERMISSION_ARRAY
+import com.whoissio.arthings.src.models.CachedData
+import java.util.*
+import kotlin.math.abs
 
 object Helper {
   fun Context.hasPermissions(): Boolean = PERMISSION_ARRAY.all {
@@ -33,5 +36,10 @@ object Helper {
       View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
       View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
       View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+  }
+
+  fun CachedData<*>.isAvailable(): Boolean {
+    val now = Date()
+    return abs(cachedAt.time - now.time) <= 300 * 1000 // 300 sec = 5 min
   }
 }

@@ -15,9 +15,15 @@ import com.whoissio.arthings.src.infra.Constants
 import com.whoissio.arthings.src.infra.utils.BleSignalScanner
 import com.whoissio.arthings.src.models.Device
 import com.whoissio.arthings.src.models.RssiTimeStamp
+import com.whoissio.arthings.src.repositories.CloudedAnchorRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.inject.Inject
 
-class MainViewModel(application: Application) : BaseViewModel(application) {
+@HiltViewModel
+class ArViewModel @Inject constructor(
+  private val cloudAnchorRepo: CloudedAnchorRepository
+) : BaseViewModel() {
 
   /* Variables for Bluetooth */
   val bleSignalScanner: BleSignalScanner = BleSignalScanner()

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.view.LayoutInflater
+import androidx.activity.viewModels
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -17,23 +18,19 @@ import com.whoissio.arthings.src.BaseActivity
 import com.whoissio.arthings.src.models.ChartMode
 import com.whoissio.arthings.src.models.DeviceInfo
 import com.whoissio.arthings.src.viewmodels.BleResultViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 import java.io.FileOutputStream
 import java.util.*
 
+@AndroidEntryPoint
 class BleResultActivity :
   BaseActivity.DBActivity<ActivityBleResultBinding, BleResultViewModel>(R.layout.activity_ble_result) {
-
-  override val bindingProvider: (LayoutInflater) -> ActivityBleResultBinding =
-    ActivityBleResultBinding::inflate
-  override val vmProvider: () -> BleResultViewModel = {
-    ViewModelProvider(
-      this,
-      BleResultViewModelFactory(application, intent.getStringExtra("Data"))
-    ).get(BleResultViewModel::class.java)
-  }
+  override val vm: BleResultViewModel by viewModels()
 
   override fun initView(savedInstanceState: Bundle?) {
+    vm.setScannedDevices(Gson().fromJson(intent.getStringExtra("Data") ?: "{}", object : TypeToken<List<DeviceInfo>>() {}.type))
+
     /* Set On Click Listener */
     binding.btnExport.setOnClickListener { onClickExport() }
     binding.btnRefresh.setOnClickListener { refreshChartData(vm.chartDataSet.value) }
@@ -95,16 +92,5 @@ class BleResultActivity :
         type = "text/plain"
       }, null)
     )*/
-  }
-
-  inner class BleResultViewModelFactory(
-    private val application: Application,
-    private val data: String?
-  ) : ViewModelProvider.Factory {
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T =
-      BleResultViewModel(
-        application,
-        Gson().fromJson(data ?: "{}", object : TypeToken<List<DeviceInfo>>() {}.type)
-      ) as T
   }
 }

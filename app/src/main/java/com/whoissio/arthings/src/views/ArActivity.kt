@@ -1,6 +1,5 @@
 package com.whoissio.arthings.src.views
 
-import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -11,7 +10,8 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.widget.TextView
-import androidx.core.util.Preconditions
+import androidx.activity.viewModels
+import androidx.lifecycle.ViewModelLazy
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.button.MaterialButton
 import com.google.ar.core.*
@@ -23,10 +23,15 @@ import com.google.ar.sceneform.rendering.DpToMetersViewSizer
 import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.ViewRenderable
 import com.google.ar.sceneform.ux.TransformableNode
+import com.google.firebase.database.ChildEventListener
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
 import com.orhanobut.logger.Logger
 import com.whoissio.arthings.R
-import com.whoissio.arthings.databinding.ActivityMainBinding
+import com.whoissio.arthings.databinding.ActivityArBinding
 import com.whoissio.arthings.src.BaseActivity
 import com.whoissio.arthings.src.infra.Constants.GLTF_RF_PATH
 import com.whoissio.arthings.src.infra.Constants.GLTF_RF_SCALE
@@ -39,15 +44,15 @@ import com.whoissio.arthings.src.infra.Helper.launchPermissionSettings
 import com.whoissio.arthings.src.infra.Helper.shouldShowAnyRequestPermissionRationales
 import com.whoissio.arthings.src.infra.utils.*
 import com.whoissio.arthings.src.models.DeviceInfo
-import com.whoissio.arthings.src.viewmodels.MainViewModel
+import com.whoissio.arthings.src.viewmodels.ArViewModel
+import com.whoissio.arthings.src.views.components.MyArFragment
+import dagger.hilt.android.AndroidEntryPoint
 import java.util.*
 
+@AndroidEntryPoint
+class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.layout.activity_ar) {
 
-class MainActivity : BaseActivity.DBActivity<ActivityMainBinding, MainViewModel>(R.layout.activity_main) {
-  override val bindingProvider: (LayoutInflater) -> ActivityMainBinding =
-    ActivityMainBinding::inflate
-  override val vmProvider: () -> MainViewModel =
-    { ViewModelProvider(this).get(MainViewModel::class.java) }
+  override val vm: ArViewModel by viewModels()
 
   private lateinit var arFragment: MyArFragment
 
@@ -84,9 +89,7 @@ class MainActivity : BaseActivity.DBActivity<ActivityMainBinding, MainViewModel>
   override fun initView(savedInstanceState: Bundle?) {
     arFragment = supportFragmentManager.findFragmentById(R.id.ar_view) as MyArFragment
     arFragment.apply {
-      setOnSessionInitializationListener {
-        vm.isDepthApiEnabled.value = arSceneView.session?.isDepthModeSupported(Config.DepthMode.AUTOMATIC) == true
-      }
+      setOnSessionInitializationListener(this@ArActivity::onSessionInitialized)
       setOnTapArPlaneListener { hitResult, plane, motionEvent ->
         val anchor = hitResult.createAnchor()
         nodeChoiceRenderer
@@ -99,6 +102,42 @@ class MainActivity : BaseActivity.DBActivity<ActivityMainBinding, MainViewModel>
 
     vm.humidity.observe(this) {
       showToast("$it")
+    }
+  }
+
+  private val onUpdateAnchorList = object : ChildEventListener {
+    override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+
+    }
+
+    override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
+
+    }
+
+    override fun onChildRemoved(snapshot: DataSnapshot) {
+
+    }
+
+    override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
+
+    }
+
+    override fun onCancelled(error: DatabaseError) {
+
+    }
+  }
+
+  private fun onSessionInitialized(it: Session?) {
+    vm.isDepthApiEnabled.value = it?.isDepthModeSupported(Config.DepthMode.AUTOMATIC).also { showToast("DEPTH: $it") } == true
+    with(Firebase.database) {
+      getReference("anchors").get()
+        .addOnSuccessListener {
+          Logger.d(it.value)
+        }
+        .addOnFailureListener {
+          it.printStackTrace()
+        }
+      getReference("anchors").addChildEventListener(onUpdateAnchorList)
     }
   }
 
@@ -116,13 +155,15 @@ class MainActivity : BaseActivity.DBActivity<ActivityMainBinding, MainViewModel>
 
   private fun addModelToScene(anchor: Anchor, renderable: ModelRenderable?) {
     val anchorNode = AnchorNode(anchor).apply {
+      setParent(arFragment.arSceneView.scene)
+    }
+    TransformableNode(arFragment.transformationSystem).apply {
+      setParent(anchorNode)
+      this.renderable = renderable
       setOnTapListener { hitTestResult, motionEvent ->
 
       }
-    }
-    val transform = TransformableNode(arFragment.transformationSystem).apply {
-      setParent(anchorNode)
-      this.renderable = renderable
+      select()
     }
     ViewRenderable.builder()
       .setView(this, R.layout.view_solar_node)
@@ -130,18 +171,27 @@ class MainActivity : BaseActivity.DBActivity<ActivityMainBinding, MainViewModel>
       .build()
       .thenAccept { setUpSolarNodeInfoView(it, anchorNode) }
       .exceptionally { onRenderError(it) }
-    arFragment.arSceneView.scene.addChild(anchorNode)
-    transform.select()
+
+    try {
+      val quality = arFragment.arSceneView.let { it.session?.estimateFeatureMapQualityForHosting(it.arFrame?.camera?.pose) }
+      Logger.d(quality?.name)
+      //val hosted = arFragment.arSceneView.session?.hostCloudAnchor(anchor) ?: return// TODO: anchor에 대한 정보는 별도 DB로 저장해야함.
+      //Logger.d(hosted.cloudAnchorId)
+      // Firebase.database.getReference("anchors").child(hosted.cloudAnchorId).push().setValue(hosted.cloudAnchorId)
+    } catch (e: Exception) {
+      e.printStackTrace()
+    }
   }
 
   private fun setUpSolarNodeInfoView(it: ViewRenderable, anchor: AnchorNode) {
     it.view.apply {
       val tvTemp = findViewById<TextView>(R.id.temperature)
-      vm.temperature.observe(this@MainActivity) {
+      val tvHumidity = findViewById<TextView>(R.id.humidity)
+      vm.temperature.observe(this@ArActivity) {
         tvTemp.text = String.format("%.1f", it)
       }
-      val tvHumidity = findViewById<TextView>(R.id.humidity)
-      vm.humidity.observe(this@MainActivity) {
+
+      vm.humidity.observe(this@ArActivity) {
         tvHumidity.text = String.format("%.1f", it)
       }
       setOnClickListener {
@@ -163,11 +213,11 @@ class MainActivity : BaseActivity.DBActivity<ActivityMainBinding, MainViewModel>
     nodeChoiceAnchorNode = AnchorNode(anchor)
     renderable.view.apply {
       findViewById<MaterialButton>(R.id.btn_solar).apply {
-        setOnTouchListener(this@MainActivity::onTouchArButton)
+        setOnTouchListener(this@ArActivity::onTouchArButton)
         setOnClickListener { onClickArButton(anchor, gltfSolar, GLTF_SOLAR_PATH) }
       }
       findViewById<MaterialButton>(R.id.btn_rf).apply {
-        setOnTouchListener(this@MainActivity::onTouchArButton)
+        setOnTouchListener(this@ArActivity::onTouchArButton)
         setOnClickListener { onClickArButton(anchor, gltfRf, GLTF_RF_PATH) }
       }
     }
@@ -240,5 +290,10 @@ class MainActivity : BaseActivity.DBActivity<ActivityMainBinding, MainViewModel>
   override fun onPause() {
     vm.pauseScanBle()
     super.onPause()
+  }
+
+  override fun onStop() {
+    super.onStop()
+    Firebase.database.getReference("anchors").removeEventListener(onUpdateAnchorList)
   }
 }

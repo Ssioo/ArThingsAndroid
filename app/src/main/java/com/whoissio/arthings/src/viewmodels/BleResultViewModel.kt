@@ -12,12 +12,13 @@ import com.whoissio.arthings.src.infra.Constants.COLOR_SET
 import com.whoissio.arthings.src.infra.Constants.SAMPLE_NODE_MAC_ADDRESS
 import com.whoissio.arthings.src.infra.utils.KalmanFilteredList
 import com.whoissio.arthings.src.models.ChartMode
-import com.whoissio.arthings.src.models.Device
 import com.whoissio.arthings.src.models.DeviceInfo
-import com.whoissio.arthings.src.models.RssiTimeStamp
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class BleResultViewModel(application: Application, scannedDevices: List<DeviceInfo>)
-  : BaseViewModel(application) {
+@HiltViewModel
+class BleResultViewModel @Inject constructor()
+  : BaseViewModel() {
 
   val scannedDevices: MutableLiveData<List<DeviceInfo>> = MutableLiveData()
   val devicesKalmaned = Transformations.map(this.scannedDevices) {
@@ -35,11 +36,11 @@ class BleResultViewModel(application: Application, scannedDevices: List<DeviceIn
     }
   }
 
-  init {
-    this.scannedDevices.value = scannedDevices
+  fun setScannedDevices(devices: List<DeviceInfo>) {
+    this.scannedDevices.value = devices
 
     chartDataSet.value = LineData(
-      scannedDevices.toList().mapIndexed { idx, it ->
+      devices.toList().mapIndexed { idx, it ->
         LineDataSet(
           it.data.map { Entry(it.key.toFloat(), it.value.toFloat()) },
           it.address
@@ -55,7 +56,7 @@ class BleResultViewModel(application: Application, scannedDevices: List<DeviceIn
       })
 
     kalManchartDataSet.value = LineData(
-      scannedDevices.toList()
+      devices.toList()
         .map {
           KalmanFilteredList(it.data.map { it.value }, it.data.map { it.key }, it.address, null)
         }
@@ -76,5 +77,9 @@ class BleResultViewModel(application: Application, scannedDevices: List<DeviceIn
           }
         }
     )
+  }
+
+  init {
+
   }
 }
