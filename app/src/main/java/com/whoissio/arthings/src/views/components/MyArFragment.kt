@@ -1,4 +1,4 @@
-package com.whoissio.arthings.src.infra.utils
+package com.whoissio.arthings.src.views.components
 
 import android.util.Log
 import android.widget.Toast
@@ -29,6 +29,7 @@ class MyArFragment: BaseArFragment() {
 
   override fun getSessionConfiguration(session: Session?): Config = Config(session).apply {
     focusMode = Config.FocusMode.AUTO
+    cloudAnchorMode = Config.CloudAnchorMode.ENABLED
     if (session?.isDepthModeSupported(Config.DepthMode.AUTOMATIC) == true) {
       depthMode = Config.DepthMode.AUTOMATIC
     }
