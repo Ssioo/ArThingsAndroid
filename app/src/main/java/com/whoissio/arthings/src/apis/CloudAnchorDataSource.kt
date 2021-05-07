@@ -12,7 +12,7 @@ import javax.inject.Inject
 
 @Module
 @InstallIn(SingletonComponent::class)
-class CloudedAnchorDataSource @Inject constructor() {
+class CloudAnchorDataSource @Inject constructor() {
   private val cloudAnchorApi = retrofit().create(CloudAnchorApi::class.java)
 
   fun fetchCloudedAnchors(): Single<List<CloudedAnchor>> {

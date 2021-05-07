@@ -52,5 +52,9 @@
             android:exported="false" />
 
         <meta-data android:name="com.google.ar.core" android:value="required" />
+
+        <meta-data
+            android:name="com.google.android.ar.API_KEY"
+            android:value="AIzaSyAS2RP_AHLH314bPiMLJuEp6oPG8HuUGXI"/>
     </application>
 </manifest>

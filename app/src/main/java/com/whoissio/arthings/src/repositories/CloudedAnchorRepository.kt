@@ -1,6 +1,6 @@
 package com.whoissio.arthings.src.repositories
 
-import com.whoissio.arthings.src.apis.CloudedAnchorDataSource
+import com.whoissio.arthings.src.apis.CloudAnchorDataSource
 import com.whoissio.arthings.src.infra.Helper.isAvailable
 import com.whoissio.arthings.src.models.CachedData
 import com.whoissio.arthings.src.models.CloudedAnchor
@@ -13,7 +13,7 @@ import javax.inject.Inject
 @Module
 @InstallIn(SingletonComponent::class)
 class CloudedAnchorRepository @Inject constructor(
-  private val dataSource: CloudedAnchorDataSource
+  private val dataSource: CloudAnchorDataSource
 ) {
   var cachedAnchors: CachedData<List<CloudedAnchor>>? = null
 

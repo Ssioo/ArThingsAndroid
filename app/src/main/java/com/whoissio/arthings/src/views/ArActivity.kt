@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.camera2.*
+import android.hardware.camera2.CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT
 import android.net.Uri
 import android.os.*
 import android.view.LayoutInflater
@@ -55,6 +56,7 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
   override val vm: ArViewModel by viewModels()
 
   private lateinit var arFragment: MyArFragment
+  private lateinit var cloudAnchorManager: CloudAnchorManager
 
   private val gltfSolar = RenderableSource.builder()
     .setSource(this, Uri.parse(GLTF_SOLAR_PATH), RenderableSource.SourceType.GLTF2)
@@ -74,7 +76,6 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
       .setSizer(DpToMetersViewSizer(1000))
       .build()
   }
-
   private var nodeChoiceAnchorNode: AnchorNode? = null
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -97,11 +98,21 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
           .exceptionally { onRenderError(it) }
       }
     }
+    val cameraManager = getSystemService(CAMERA_SERVICE) as CameraManager
+    vm.isDepthApiEnabled.value = cameraManager.cameraIdList.any {
+      val characteristics = cameraManager.getCameraCharacteristics(it)
+      val capabilities = characteristics.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
+      capabilities?.contains(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) == true
+    }
 
-    binding.btnExport.setOnClickListener{ onClickBtnExport() }
+    with(binding) {
+      btnExport.setOnClickListener{ onClickBtnExport() }
+    }
 
-    vm.humidity.observe(this) {
-      showToast("$it")
+    with(vm) {
+      humidity.observe(this@ArActivity) {
+        showToast("$it")
+      }
     }
   }
 
@@ -128,7 +139,12 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
   }
 
   private fun onSessionInitialized(it: Session?) {
-    vm.isDepthApiEnabled.value = it?.isDepthModeSupported(Config.DepthMode.AUTOMATIC).also { showToast("DEPTH: $it") } == true
+    it ?: return
+    cloudAnchorManager = CloudAnchorManager(it)
+    arFragment.arSceneView.scene.addOnUpdateListener {
+      cloudAnchorManager.onUpdate()
+    }
+
     with(Firebase.database) {
       getReference("anchors").get()
         .addOnSuccessListener {
@@ -172,14 +188,18 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
       .thenAccept { setUpSolarNodeInfoView(it, anchorNode) }
       .exceptionally { onRenderError(it) }
 
-    try {
-      val quality = arFragment.arSceneView.let { it.session?.estimateFeatureMapQualityForHosting(it.arFrame?.camera?.pose) }
-      Logger.d(quality?.name)
-      //val hosted = arFragment.arSceneView.session?.hostCloudAnchor(anchor) ?: return// TODO: anchor에 대한 정보는 별도 DB로 저장해야함.
-      //Logger.d(hosted.cloudAnchorId)
-      // Firebase.database.getReference("anchors").child(hosted.cloudAnchorId).push().setValue(hosted.cloudAnchorId)
-    } catch (e: Exception) {
-      e.printStackTrace()
+    kotlin.runCatching {
+      arFragment.arSceneView.let { it.session?.estimateFeatureMapQualityForHosting(it.arFrame?.camera?.pose) }
+    }
+      .onSuccess {
+        Logger.d(it?.name)
+        cloudAnchorManager.hostCloudAnchor(anchor) {
+          Logger.d(it.cloudAnchorId)
+          Logger.d(it.pose)
+        }
+      }
+      .onFailure {
+      it.printStackTrace()
     }
   }
 
@@ -187,12 +207,10 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
     it.view.apply {
       val tvTemp = findViewById<TextView>(R.id.temperature)
       val tvHumidity = findViewById<TextView>(R.id.humidity)
-      vm.temperature.observe(this@ArActivity) {
-        tvTemp.text = String.format("%.1f", it)
-      }
 
-      vm.humidity.observe(this@ArActivity) {
-        tvHumidity.text = String.format("%.1f", it)
+      with(vm) {
+        temperature.observe(this@ArActivity) { tvTemp.text = String.format("%.1f", it) }
+        humidity.observe(this@ArActivity) { tvHumidity.text = String.format("%.1f", it) }
       }
       setOnClickListener {
 
@@ -250,15 +268,14 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
     return null
   }
 
-  private fun hasValidARCoreAndUpToDate(): Boolean {
-    return when (ArCoreApk.getInstance().checkAvailability(this)) {
+  private fun hasValidARCoreAndUpToDate(): Boolean =
+    when (ArCoreApk.getInstance().checkAvailability(this)) {
       ArCoreApk.Availability.SUPPORTED_INSTALLED -> true
       ArCoreApk.Availability.SUPPORTED_APK_TOO_OLD, ArCoreApk.Availability.SUPPORTED_NOT_INSTALLED -> {
-        try {
+        kotlin.runCatching {
           ArCoreApk.getInstance().requestInstall(this, true) == ArCoreApk.InstallStatus.INSTALLED
-        } catch (e: Exception) {
-          false
         }
+          .getOrDefault(false)
       }
       ArCoreApk.Availability.UNSUPPORTED_DEVICE_NOT_CAPABLE, ArCoreApk.Availability.UNKNOWN_ERROR, ArCoreApk.Availability.UNKNOWN_TIMED_OUT -> {
         showToast("AR 사용이 불가능한 기종입니다.")
@@ -266,7 +283,6 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
       }
       else -> false
     }
-  }
 
   override fun onRequestPermissionsResult(
     requestCode: Int,
