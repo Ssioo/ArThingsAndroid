@@ -2,12 +2,17 @@ package com.whoissio.arthings.src.infra.utils
 
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
+import dagger.hilt.android.scopes.ActivityRetainedScoped
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.kotlin.addTo
 import io.reactivex.rxjava3.schedulers.Schedulers
 import io.reactivex.rxjava3.subjects.PublishSubject
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class BleSignalScanner: ScanCallback(), IBleSignalScanner {
+@ActivityRetainedScoped
+class BleSignalScanner @Inject constructor(): ScanCallback(), IBleSignalScanner {
 
   private val disposable = CompositeDisposable()
   private val prov: PublishSubject<ScanResult> = PublishSubject.create()
@@ -34,7 +39,7 @@ class BleSignalScanner: ScanCallback(), IBleSignalScanner {
     if (disposable.size() > 0)
       disposable.clear()
     prov.subscribe(onReceive, { onError?.invoke(it) })
-      .also { disposable.add(it) }
+      .addTo(disposable)
   }
 
   override fun onCleared() {

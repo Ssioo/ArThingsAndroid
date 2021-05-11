@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
+        <import type="android.view.View" />
         <variable
             name="vm"
             type="com.whoissio.arthings.src.viewmodels.ArViewModel" />
@@ -30,6 +31,30 @@
             android:textStyle="bold"
             android:layout_gravity="center|top"
             android:layout_marginTop="10dp" />
+
+        <include
+            android:visibility="@{vm.scannedDevices.size > 0 ? View.VISIBLE : View.GONE}"
+            app:vm="@{vm}"
+            android:id="@+id/box_new_address"
+            layout="@layout/view_new_address" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_refresh"
+            android:text="REFRESH DATA"
+            android:letterSpacing="0"
+            android:insetRight="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:insetLeft="0dp"
+            android:minHeight="0dp"
+            android:minWidth="0dp"
+            android:paddingVertical="6dp"
+            android:paddingHorizontal="28dp"
+            app:cornerRadius="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center"
+            android:layout_marginBottom="60dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_export"

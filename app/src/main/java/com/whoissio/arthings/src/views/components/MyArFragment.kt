@@ -6,6 +6,7 @@ import com.google.ar.core.Config
 import com.google.ar.core.Session
 import com.google.ar.core.exceptions.*
 import com.google.ar.sceneform.ux.BaseArFragment
+import dagger.hilt.android.AndroidEntryPoint
 
 class MyArFragment: BaseArFragment() {
 

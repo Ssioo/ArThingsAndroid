@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <import type="com.whoissio.arthings.src.infra.Converters" />
+        <variable
+            name="vm"
+            type="com.whoissio.arthings.src.viewmodels.ArViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:background="#883AA0E1"
+        android:layout_marginHorizontal="30dp"
+        android:layout_marginTop="40dp">
+
+        <TextView
+            android:id="@+id/title_new_address"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/new_address"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New Device Found" />
+
+        <TextView
+            android:id="@+id/new_address"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="23:34:23:ae:76:54"
+            android:text="@{vm.closestScannedDevice == null ? ``: vm.closestScannedDevice.first.address}"
+            app:layout_constraintVertical_chainStyle="packed"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/title_new_address"
+            app:layout_constraintBottom_toTopOf="@id/distance_new_address"
+            android:textSize="18sp"
+            android:textColor="#333" />
+
+
+        <TextView
+            android:id="@+id/distance_new_address"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/new_address"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="0.3m"
+            android:text="@{vm.closestScannedDevice == null ? ``: String.format(`%.1f`, Converters.estimatedDistanceByBle(vm.closestScannedDevice.second, vm.closestScannedDevice.first.txPower)) + `m`}" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

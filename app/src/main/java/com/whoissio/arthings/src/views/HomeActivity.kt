@@ -3,7 +3,8 @@ package com.whoissio.arthings.src.views
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.viewModels
-import com.whoissio.arthings.ApplicationClass.Companion.firebaseAuth
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import com.whoissio.arthings.R
 import com.whoissio.arthings.databinding.ActivityHomeBinding
 import com.whoissio.arthings.src.BaseActivity
@@ -27,8 +28,8 @@ class HomeActivity: BaseActivity.DBActivity<ActivityHomeBinding, HomeViewModel>(
       return
     }
     showProgress()
-    firebaseAuth?.signInWithEmailAndPassword(vm.userId.value!!, vm.userPwd.value!!)
-      ?.addOnCompleteListener(this) {
+    Firebase.auth.signInWithEmailAndPassword(vm.userId.value!!, vm.userPwd.value!!)
+      .addOnCompleteListener(this) {
         hideProgress()
         if (it.isSuccessful) {
           showToast("환영합니다. Admin님")
@@ -43,8 +44,8 @@ class HomeActivity: BaseActivity.DBActivity<ActivityHomeBinding, HomeViewModel>(
 
   private fun onClickBtnGuestSignIn() {
     showProgress()
-    firebaseAuth?.signInAnonymously()
-      ?.addOnCompleteListener(this) {
+    Firebase.auth.signInAnonymously()
+      .addOnCompleteListener(this) {
         hideProgress()
         if (it.isSuccessful) {
           startActivity(Intent(this, ArActivity::class.java))

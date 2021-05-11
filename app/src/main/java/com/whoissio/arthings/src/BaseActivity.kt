@@ -14,7 +14,9 @@ import androidx.viewbinding.ViewBinding
 import com.whoissio.arthings.BR
 import dagger.hilt.android.AndroidEntryPoint
 
-sealed class BaseActivity<B> : AppCompatActivity() {
+abstract class BaseActivity<B: ViewBinding> : AppCompatActivity() {
+
+  protected abstract val binding: B
 
   protected val progressDialog by lazy {
     ProgressDialog(this).apply {
@@ -26,7 +28,7 @@ sealed class BaseActivity<B> : AppCompatActivity() {
   abstract class DBActivity<B : ViewDataBinding, VM : BaseViewModel>(@LayoutRes val layoutId: Int) :
     BaseActivity<B>() {
 
-    protected val binding: B by lazy { DataBindingUtil.setContentView<B>(this, layoutId) }
+    override val binding: B by lazy { DataBindingUtil.setContentView<B>(this, layoutId) }
 
     protected abstract val vm: VM
 
@@ -42,7 +44,7 @@ sealed class BaseActivity<B> : AppCompatActivity() {
 
     protected abstract val bindingProvider: (LayoutInflater) -> B
 
-    protected val binding: B by lazy { bindingProvider(layoutInflater) }
+    override val binding: B by lazy { bindingProvider(layoutInflater) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
@@ -65,6 +67,6 @@ sealed class BaseActivity<B> : AppCompatActivity() {
 
   override fun onStop() {
     super.onStop()
-    progressDialog.hide()
+    progressDialog.dismiss()
   }
 }

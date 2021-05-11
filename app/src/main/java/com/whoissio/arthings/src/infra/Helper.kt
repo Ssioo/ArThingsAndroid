@@ -9,6 +9,8 @@ import android.provider.Settings
 import android.view.View
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
 import com.whoissio.arthings.src.infra.Constants.PERMISSION_ARRAY
 import com.whoissio.arthings.src.models.CachedData
 import java.util.*
@@ -41,5 +43,16 @@ object Helper {
   fun CachedData<*>.isAvailable(): Boolean {
     val now = Date()
     return abs(cachedAt.time - now.time) <= 300 * 1000 // 300 sec = 5 min
+  }
+
+  fun <T, K, R> LiveData<T>.combine(other: LiveData<K>, block: (T?, K?) -> R): LiveData<R> {
+    val result = MediatorLiveData<R>()
+    result.addSource(this) {
+      result.value = block(this.value, other.value)
+    }
+    result.addSource(other) {
+      result.value = block(this.value, other.value)
+    }
+    return result
   }
 }

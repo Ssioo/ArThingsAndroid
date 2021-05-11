@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="vm"
+            type="com.whoissio.arthings.src.viewmodels.NodeEditViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:hint="Address"
+            android:textColor="@color/dark"
+            android:textColorHint="@color/light_grey"
+            android:layout_marginHorizontal="20dp"
+            android:id="@+id/et_new_address" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/et_new_address"
+            android:layout_marginHorizontal="20dp"
+            android:textColor="@color/dark"
+            tools:text="2020.11.12.12:12:30"
+            android:id="@+id/tv_anchored_at" />
+
+        <com.google.android.material.button.MaterialButton
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cornerRadius="10dp"
+            android:id="@+id/btn_delete"
+            app:layout_constraintBottom_toTopOf="@id/btn_submit"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:text="delete"
+            android:textSize="16sp"
+            android:letterSpacing="0"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginBottom="20dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cornerRadius="10dp"
+            android:id="@+id/btn_submit"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:text="SUBMIT"
+            android:textSize="16sp"
+            android:letterSpacing="0"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginBottom="20dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

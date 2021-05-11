@@ -4,42 +4,32 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.camera2.*
-import android.hardware.camera2.CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT
-import android.net.Uri
 import android.os.*
-import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.widget.TextView
 import androidx.activity.viewModels
-import androidx.lifecycle.ViewModelLazy
-import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.button.MaterialButton
 import com.google.ar.core.*
 import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.Node
 import com.google.ar.sceneform.assets.RenderableSource
 import com.google.ar.sceneform.math.Vector3
-import com.google.ar.sceneform.rendering.DpToMetersViewSizer
 import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.ViewRenderable
+import com.google.ar.sceneform.ux.BaseArFragment
 import com.google.ar.sceneform.ux.TransformableNode
-import com.google.firebase.database.ChildEventListener
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.ktx.database
-import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
 import com.orhanobut.logger.Logger
 import com.whoissio.arthings.R
 import com.whoissio.arthings.databinding.ActivityArBinding
 import com.whoissio.arthings.src.BaseActivity
+import com.whoissio.arthings.src.infra.ArRendererProvider
 import com.whoissio.arthings.src.infra.Constants.GLTF_RF_PATH
-import com.whoissio.arthings.src.infra.Constants.GLTF_RF_SCALE
 import com.whoissio.arthings.src.infra.Constants.GLTF_SOLAR_PATH
-import com.whoissio.arthings.src.infra.Constants.GLTF_SOLAR_SCALE
 import com.whoissio.arthings.src.infra.Constants.PERMISSION_ARRAY
 import com.whoissio.arthings.src.infra.Constants.PERMISSION_REQUEST_CODE
+import com.whoissio.arthings.src.infra.Constants.SAMPLE_NODE_MAC_ADDRESS
 import com.whoissio.arthings.src.infra.Helper.hasPermissions
 import com.whoissio.arthings.src.infra.Helper.launchPermissionSettings
 import com.whoissio.arthings.src.infra.Helper.shouldShowAnyRequestPermissionRationales
@@ -49,34 +39,21 @@ import com.whoissio.arthings.src.viewmodels.ArViewModel
 import com.whoissio.arthings.src.views.components.MyArFragment
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.*
+import javax.inject.Inject
 
 @AndroidEntryPoint
-class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.layout.activity_ar) {
-
+class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.layout.activity_ar),
+  BaseArFragment.OnTapArPlaneListener,
+  BaseArFragment.OnSessionInitializationListener
+{
   override val vm: ArViewModel by viewModels()
+  @Inject lateinit var cloudAnchorManager: CloudAnchorManager
+  @Inject lateinit var arRendererProvider: ArRendererProvider
 
   private lateinit var arFragment: MyArFragment
-  private lateinit var cloudAnchorManager: CloudAnchorManager
 
-  private val gltfSolar = RenderableSource.builder()
-    .setSource(this, Uri.parse(GLTF_SOLAR_PATH), RenderableSource.SourceType.GLTF2)
-    .setScale(GLTF_SOLAR_SCALE)
-    .setRecenterMode(RenderableSource.RecenterMode.ROOT)
-    .build()
-
-  private val gltfRf = RenderableSource.builder()
-    .setSource(this, Uri.parse(GLTF_RF_PATH), RenderableSource.SourceType.GLTF2)
-    .setScale(GLTF_RF_SCALE)
-    .setRecenterMode(RenderableSource.RecenterMode.ROOT)
-    .build()
-
-  private val nodeChoiceRenderer by lazy {
-    ViewRenderable.builder()
-      .setView(this, R.layout.view_node_attacher)
-      .setSizer(DpToMetersViewSizer(1000))
-      .build()
-  }
   private var nodeChoiceAnchorNode: AnchorNode? = null
+  private val cameraManager by lazy { getSystemService(CAMERA_SERVICE) as CameraManager }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     if (!hasPermissions()) {
@@ -90,71 +67,45 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
   override fun initView(savedInstanceState: Bundle?) {
     arFragment = supportFragmentManager.findFragmentById(R.id.ar_view) as MyArFragment
     arFragment.apply {
-      setOnSessionInitializationListener(this@ArActivity::onSessionInitialized)
-      setOnTapArPlaneListener { hitResult, plane, motionEvent ->
-        val anchor = hitResult.createAnchor()
-        nodeChoiceRenderer
-          .thenAccept { addArChoiceViewToScene(anchor, it) }
-          .exceptionally { onRenderError(it) }
-      }
-    }
-    val cameraManager = getSystemService(CAMERA_SERVICE) as CameraManager
-    vm.isDepthApiEnabled.value = cameraManager.cameraIdList.any {
-      val characteristics = cameraManager.getCameraCharacteristics(it)
-      val capabilities = characteristics.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
-      capabilities?.contains(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) == true
+      setOnSessionInitializationListener(this@ArActivity)
+      setOnTapArPlaneListener(this@ArActivity)
+      arSceneView.scene.addOnUpdateListener { cloudAnchorManager.onUpdate() }
     }
 
     with(binding) {
-      btnExport.setOnClickListener{ onClickBtnExport() }
+      btnExport.setOnClickListener { onClickBtnExport() }
+      btnRefresh.setOnClickListener { onClickRefresh() }
     }
 
     with(vm) {
-      humidity.observe(this@ArActivity) {
-        showToast("$it")
+      isDepthApiEnabled.value = cameraManager.cameraIdList.any {
+        cameraManager.getCameraCharacteristics(it)
+          .get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
+          ?.contains(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) == true
       }
     }
   }
 
-  private val onUpdateAnchorList = object : ChildEventListener {
-    override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+  override fun onTapPlane(hitResult: HitResult?, plane: Plane?, motionEvent: MotionEvent?) {
+    val anchor = hitResult?.createAnchor() ?: return
+    arRendererProvider.nodeChoiceRenderer
+      .thenAccept { addArChoiceViewToScene(anchor, it) }
+      .exceptionally { onRenderError(it) }
+  }
 
-    }
-
-    override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
-
-    }
-
-    override fun onChildRemoved(snapshot: DataSnapshot) {
-
-    }
-
-    override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {
-
-    }
-
-    override fun onCancelled(error: DatabaseError) {
-
+  override fun onSessionInitialization(session: Session?) {
+    vm.cloudedAnchors.observe(this) {
+      it.forEach {
+        cloudAnchorManager.resolveCloudAnchor(session, it.id) {
+          onClickArButton(it, arRendererProvider.gltfSolar, GLTF_SOLAR_PATH, false)
+        }
+      }
     }
   }
 
-  private fun onSessionInitialized(it: Session?) {
-    it ?: return
-    cloudAnchorManager = CloudAnchorManager(it)
-    arFragment.arSceneView.scene.addOnUpdateListener {
-      cloudAnchorManager.onUpdate()
-    }
+  // 전체 데이터 갱신
+  private fun onClickRefresh() {
 
-    with(Firebase.database) {
-      getReference("anchors").get()
-        .addOnSuccessListener {
-          Logger.d(it.value)
-        }
-        .addOnFailureListener {
-          it.printStackTrace()
-        }
-      getReference("anchors").addChildEventListener(onUpdateAnchorList)
-    }
   }
 
   private fun onClickBtnExport() {
@@ -169,7 +120,7 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
     })
   }
 
-  private fun addModelToScene(anchor: Anchor, renderable: ModelRenderable?) {
+  private fun createArNodeToScene(anchor: Anchor, renderable: ModelRenderable?, isNewAnchor: Boolean = true) {
     val anchorNode = AnchorNode(anchor).apply {
       setParent(arFragment.arSceneView.scene)
     }
@@ -181,25 +132,22 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
       }
       select()
     }
-    ViewRenderable.builder()
-      .setView(this, R.layout.view_solar_node)
-      .setSizer(DpToMetersViewSizer(1000))
-      .build()
+    arRendererProvider.getNodeViewRenderer(R.layout.view_solar_node)
       .thenAccept { setUpSolarNodeInfoView(it, anchorNode) }
       .exceptionally { onRenderError(it) }
 
-    kotlin.runCatching {
+    if (isNewAnchor) uploadAnchor(anchor)
+  }
+
+  private fun uploadAnchor(anchor: Anchor) {
+    try {
       arFragment.arSceneView.let { it.session?.estimateFeatureMapQualityForHosting(it.arFrame?.camera?.pose) }
-    }
-      .onSuccess {
-        Logger.d(it?.name)
-        cloudAnchorManager.hostCloudAnchor(anchor) {
-          Logger.d(it.cloudAnchorId)
-          Logger.d(it.pose)
-        }
+        .also { Logger.d(it?.name) }
+      cloudAnchorManager.hostCloudAnchor(arFragment.arSceneView.session, anchor) {
+        vm.createNewHostAnchor(it, SAMPLE_NODE_MAC_ADDRESS)
       }
-      .onFailure {
-      it.printStackTrace()
+    } catch (e: Exception) {
+      e.printStackTrace()
     }
   }
 
@@ -211,9 +159,6 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
       with(vm) {
         temperature.observe(this@ArActivity) { tvTemp.text = String.format("%.1f", it) }
         humidity.observe(this@ArActivity) { tvHumidity.text = String.format("%.1f", it) }
-      }
-      setOnClickListener {
-
       }
     }
     Node().apply {
@@ -232,24 +177,24 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
     renderable.view.apply {
       findViewById<MaterialButton>(R.id.btn_solar).apply {
         setOnTouchListener(this@ArActivity::onTouchArButton)
-        setOnClickListener { onClickArButton(anchor, gltfSolar, GLTF_SOLAR_PATH) }
+        setOnClickListener { onClickArButton(anchor, arRendererProvider.gltfSolar, GLTF_SOLAR_PATH) }
       }
       findViewById<MaterialButton>(R.id.btn_rf).apply {
         setOnTouchListener(this@ArActivity::onTouchArButton)
-        setOnClickListener { onClickArButton(anchor, gltfRf, GLTF_RF_PATH) }
+        setOnClickListener { onClickArButton(anchor, arRendererProvider.gltfRf, GLTF_RF_PATH) }
       }
     }
     nodeChoiceAnchorNode?.renderable = renderable
     nodeChoiceAnchorNode?.setParent(arFragment.arSceneView.scene)
   }
 
-  private fun onClickArButton(anchor: Anchor, renderer: RenderableSource, id: String) {
+  private fun onClickArButton(anchor: Anchor, renderer: RenderableSource, id: String, isNew: Boolean = true) {
     nodeChoiceAnchorNode?.setParent(null)
     ModelRenderable.builder()
       .setSource(this, renderer)
       .setRegistryId(id)
       .build()
-      .thenAccept { addModelToScene(anchor, it) }
+      .thenAccept { createArNodeToScene(anchor, it, isNew) }
       .exceptionally { onRenderError(it) }
   }
 
@@ -309,7 +254,7 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
   }
 
   override fun onStop() {
+    cloudAnchorManager.clear()
     super.onStop()
-    Firebase.database.getReference("anchors").removeEventListener(onUpdateAnchorList)
   }
 }

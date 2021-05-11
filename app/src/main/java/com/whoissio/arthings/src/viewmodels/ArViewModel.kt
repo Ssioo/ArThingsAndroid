@@ -1,23 +1,22 @@
 package com.whoissio.arthings.src.viewmodels
 
-import android.app.Application
-import android.hardware.camera2.CameraCaptureSession
-import android.hardware.camera2.CameraDevice
-import android.hardware.camera2.CaptureRequest
-import android.hardware.camera2.TotalCaptureResult
 import android.os.Build
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Transformations
 import com.google.ar.core.Anchor
 import com.orhanobut.logger.Logger
 import com.whoissio.arthings.ApplicationClass.Companion.scanner
 import com.whoissio.arthings.src.BaseViewModel
 import com.whoissio.arthings.src.infra.Constants
+import com.whoissio.arthings.src.infra.Helper.combine
 import com.whoissio.arthings.src.infra.utils.BleSignalScanner
+import com.whoissio.arthings.src.models.CloudAnchor
 import com.whoissio.arthings.src.models.Device
 import com.whoissio.arthings.src.models.RssiTimeStamp
 import com.whoissio.arthings.src.repositories.CloudedAnchorRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.util.concurrent.atomic.AtomicBoolean
+import io.reactivex.rxjava3.kotlin.addTo
 import javax.inject.Inject
 
 @HiltViewModel
@@ -25,18 +24,28 @@ class ArViewModel @Inject constructor(
   private val cloudAnchorRepo: CloudedAnchorRepository
 ) : BaseViewModel() {
 
-  /* Variables for Bluetooth */
-  val bleSignalScanner: BleSignalScanner = BleSignalScanner()
+  @Inject lateinit var bleSignalScanner: BleSignalScanner
   var isScanning = false
   val scannedDevices: MutableLiveData<Map<Device, RssiTimeStamp>> = MutableLiveData(mapOf())
-  val isDepthApiEnabled = MutableLiveData(false)
 
+  val isDepthApiEnabled = MutableLiveData(false)
   val humidity: MutableLiveData<Double> = MutableLiveData()
   val temperature: MutableLiveData<Double> = MutableLiveData()
+  val cloudedAnchors: MutableLiveData<List<CloudAnchor>> = MutableLiveData(emptyList())
+
+  val closestScannedDevice = Transformations.map(scannedDevices) {
+    it.map {
+      it.key to it.value.toList().last().second
+    }.sortedBy { it.second }
+  }
+    .combine(cloudedAnchors) { a, b ->
+      a?.filter { b?.map { it.address }?.contains(it.first.address) == true }?.firstOrNull()
+    }
 
   fun resumeScanBle() {
     if (isScanning) return
     bleSignalScanner.register({
+      if (it.rssi < -80) return@register // 너무 낮은 데이터 필터링
       val curList = (scannedDevices.value ?: mapOf()).toMutableMap()
       val txPower = when (it.scanRecord?.txPowerLevel) {
         Int.MIN_VALUE -> {
@@ -65,6 +74,16 @@ class ArViewModel @Inject constructor(
     isScanning = true
   }
 
+  fun createNewHostAnchor(anchor: Anchor, address: String) {
+    cloudAnchorRepo.createNewAnchorOnAddress(anchor, address)
+      .subscribe({
+        Logger.d("Created ${anchor.cloudAnchorId} to ${address}")
+      }, {
+        it.printStackTrace()
+      })
+      .addTo(disposable)
+  }
+
   fun pauseScanBle() {
     if (!isScanning) return
     bleSignalScanner.register({}, null)
@@ -72,29 +91,18 @@ class ArViewModel @Inject constructor(
     isScanning = false
   }
 
-  /* Variables for Camera */
-  var keysThatCanCauseCaptureDelaysWhenModified = mutableListOf<CaptureRequest.Key<*>>()
-  val anchors: ArrayList<Anchor> = arrayListOf()
-  val shouldUpdateSurfaceTexture = AtomicBoolean(false)
-  var cameraDevice: CameraDevice? = null
-
-  val cameraCaptureCallback = object : CameraCaptureSession.CaptureCallback() {
-    override fun onCaptureCompleted(
-      session: CameraCaptureSession,
-      request: CaptureRequest,
-      result: TotalCaptureResult
-    ) {
-      shouldUpdateSurfaceTexture.set(true)
-    }
-  }
-
-  fun releaseCameraDevice() {
-    cameraDevice?.close()
-    cameraDevice = null
-  }
-
   override fun onCleared() {
     bleSignalScanner.onCleared()
     super.onCleared()
+  }
+
+
+  init {
+    cloudAnchorRepo.loadData().subscribe({
+      cloudedAnchors.value = it
+    }, {
+      it.printStackTrace()
+    })
+      .addTo(disposable)
   }
 }

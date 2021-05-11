@@ -22,7 +22,6 @@ class ApplicationClass: Application() {
     var adapter: BluetoothAdapter? = null
     var scanner: BluetoothLeScanner? = null
 
-    var firebaseAuth: FirebaseAuth? = null
   }
 
   override fun onCreate() {
@@ -30,8 +29,6 @@ class ApplicationClass: Application() {
     bleManager = getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
     adapter = bleManager?.adapter
     scanner = adapter?.bluetoothLeScanner
-
-    firebaseAuth = Firebase.auth
 
     Logger.addLogAdapter(object: AndroidLogAdapter(
       PrettyFormatStrategy.newBuilder()
