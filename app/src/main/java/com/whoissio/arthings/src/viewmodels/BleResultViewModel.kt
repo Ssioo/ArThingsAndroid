@@ -1,6 +1,5 @@
 package com.whoissio.arthings.src.viewmodels
 
-import android.app.Application
 import android.graphics.Color
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
@@ -9,7 +8,7 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.whoissio.arthings.src.BaseViewModel
 import com.whoissio.arthings.src.infra.Constants.COLOR_SET
-import com.whoissio.arthings.src.infra.Constants.SAMPLE_NODE_MAC_ADDRESS
+import com.whoissio.arthings.src.infra.Constants.SAMPLE_NODE_MAC_ADDRESS1
 import com.whoissio.arthings.src.infra.utils.KalmanFilteredList
 import com.whoissio.arthings.src.models.ChartMode
 import com.whoissio.arthings.src.models.DeviceInfo
@@ -48,7 +47,7 @@ class BleResultViewModel @Inject constructor()
           color = COLOR_SET[idx % COLOR_SET.size]
           setDrawCircles(false)
           mode = LineDataSet.Mode.HORIZONTAL_BEZIER
-          if (it.address == SAMPLE_NODE_MAC_ADDRESS) {
+          if (it.address == SAMPLE_NODE_MAC_ADDRESS1) {
             lineWidth = 8f
             color = Color.BLACK
           }
@@ -70,7 +69,7 @@ class BleResultViewModel @Inject constructor()
             color = COLOR_SET[idx % COLOR_SET.size]
             setDrawCircles(false)
             mode = LineDataSet.Mode.HORIZONTAL_BEZIER
-            if (it.tag == SAMPLE_NODE_MAC_ADDRESS) {
+            if (it.tag == SAMPLE_NODE_MAC_ADDRESS1) {
               lineWidth = 8f
               color = Color.BLACK
             }

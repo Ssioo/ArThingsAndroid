@@ -4,6 +4,17 @@
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <ImageView
+        android:id="@+id/btn_close"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        app:tint="@color/dark"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/btn_solar"
+        android:background="@drawable/bg_white_corner_10"
+        android:src="@drawable/ic_close" />
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_solar"
         android:layout_width="match_parent"
@@ -13,7 +24,7 @@
         android:textColor="@color/black"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btn_close"
         app:layout_constraintBottom_toTopOf="@id/btn_rf"
         android:text="Solar" />
 

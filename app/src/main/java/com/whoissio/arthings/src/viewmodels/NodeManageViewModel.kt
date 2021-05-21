@@ -16,11 +16,12 @@ class NodeManageViewModel @Inject constructor(
 
   val cloudedAnchors: MutableLiveData<List<CloudAnchor>> = MutableLiveData(listOf())
 
-  fun refresh() {
+  fun refresh(onRefresh: (() -> Unit)? = null) {
     cloudAnchorRepo.loadData()
       .subscribe({
         Logger.d(it)
         this.cloudedAnchors.value = it
+        onRefresh?.invoke()
       }, {
         onException(it)
       })

@@ -32,7 +32,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             tools:text="23:34:23:ae:76:54"
-            android:text="@{vm.closestScannedDevice == null ? ``: vm.closestScannedDevice.first.address}"
+            android:text="@{vm.notUploadedBleData.size == 0 ? ``: vm.notUploadedBleData[0].first.address}"
             app:layout_constraintVertical_chainStyle="packed"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -50,8 +50,8 @@
             app:layout_constraintBottom_toBottomOf="parent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            tools:text="0.3m"
-            android:text="@{vm.closestScannedDevice == null ? ``: String.format(`%.1f`, Converters.estimatedDistanceByBle(vm.closestScannedDevice.second, vm.closestScannedDevice.first.txPower)) + `m`}" />
+            tools:text="0.30m"
+            android:text="@{vm.notUploadedBleData.size == 0 ? ``: String.format(`%.2f`, Converters.estimatedDistanceByBle(vm.notUploadedBleData[0].second[vm.notUploadedBleData[0].second.length - 1], vm.notUploadedBleData[0].first.txPower)) + `m`}" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

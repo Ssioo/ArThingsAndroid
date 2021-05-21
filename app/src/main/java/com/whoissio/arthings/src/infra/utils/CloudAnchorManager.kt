@@ -19,21 +19,21 @@ class CloudAnchorManager @Inject constructor() {
   }
 
    fun resolveCloudAnchor(session: Session?, anchorId: String, listener: (Anchor) -> Unit) {
-     session?: return
+     session ?: return
      val newAnchor = session.resolveCloudAnchor(anchorId)
      pendingAnchors[newAnchor] = listener
   }
   
   fun onUpdate() {
+    val toRemove = mutableListOf<Anchor>()
     pendingAnchors.forEach { (key, value) ->
       if (!listOf(Anchor.CloudAnchorState.TASK_IN_PROGRESS, Anchor.CloudAnchorState.NONE).contains(key.cloudAnchorState)) {
         value(key)
-        pendingAnchors.remove(key)
+        toRemove.add(key)
       }
     }
+    toRemove.forEach { pendingAnchors.remove(it) }
   }
 
-  fun clear() {
-    pendingAnchors.clear()
-  }
+  fun clear() = pendingAnchors.clear()
 }

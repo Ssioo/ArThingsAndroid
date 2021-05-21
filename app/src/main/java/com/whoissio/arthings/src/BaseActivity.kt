@@ -1,11 +1,13 @@
 package com.whoissio.arthings.src
 
 import android.app.ProgressDialog
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.annotation.LayoutRes
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
@@ -16,7 +18,7 @@ import dagger.hilt.android.AndroidEntryPoint
 
 abstract class BaseActivity<B: ViewBinding> : AppCompatActivity() {
 
-  protected abstract val binding: B
+  abstract val binding: B
 
   protected val progressDialog by lazy {
     ProgressDialog(this).apply {
@@ -30,12 +32,15 @@ abstract class BaseActivity<B: ViewBinding> : AppCompatActivity() {
 
     override val binding: B by lazy { DataBindingUtil.setContentView<B>(this, layoutId) }
 
-    protected abstract val vm: VM
+    abstract val vm: VM
 
     override fun onCreate(savedInstanceState: Bundle?) {
       super.onCreate(savedInstanceState)
       binding.setVariable(BR.vm, vm)
       binding.lifecycleOwner = this
+
+      vm.toastEvent.observe(this) { it.get()?.let { showToast(it) } }
+      vm.alertEvent.observe(this) { it.get()?.let { showAlert(it) } }
       initView(savedInstanceState)
     }
   }
@@ -56,6 +61,16 @@ abstract class BaseActivity<B: ViewBinding> : AppCompatActivity() {
   abstract fun initView(savedInstanceState: Bundle?)
 
   fun showToast(message: String) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+
+  fun showAlert(message: String) {
+    AlertDialog.Builder(this)
+      .setTitle("알림")
+      .setMessage(message)
+      .setPositiveButton("확인") { dialog, _ ->
+        dialog.dismiss()
+      }
+      .show()
+  }
 
   fun showProgress() {
     if (!isFinishing && !progressDialog.isShowing) progressDialog.show()

@@ -33,7 +33,7 @@
             android:layout_marginTop="10dp" />
 
         <include
-            android:visibility="@{vm.scannedDevices.size > 0 ? View.VISIBLE : View.GONE}"
+            android:visibility="@{vm.closestScannedDevice != null ? View.VISIBLE : View.GONE}"
             app:vm="@{vm}"
             android:id="@+id/box_new_address"
             layout="@layout/view_new_address" />

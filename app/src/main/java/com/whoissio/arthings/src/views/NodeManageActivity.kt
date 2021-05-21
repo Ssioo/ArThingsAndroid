@@ -18,23 +18,27 @@ class NodeManageActivity: BaseActivity.DBActivity<ActivityNodeManageBinding, Nod
   @Inject lateinit var nodeManageRecyclerViewAdapter: NodeManageRecyclerViewAdapter
 
   override fun initView(savedInstanceState: Bundle?) {
-    with(binding) {
-      rvNodes.adapter = nodeManageRecyclerViewAdapter
-      btnAdd.setOnClickListener {
-        startActivityForResult(Intent(this@NodeManageActivity, NodeEditActivity::class.java).apply {
-
-        }, 100)
+    binding.rvNodes.adapter = nodeManageRecyclerViewAdapter
+    binding.srlNodes.setOnRefreshListener {
+      binding.srlNodes.isRefreshing = true
+      vm.refresh {
+        binding.srlNodes.isRefreshing = false
       }
     }
-    with(vm) {
-      cloudedAnchors.observe(this@NodeManageActivity, nodeManageRecyclerViewAdapter::setItems)
+    binding.btnAr.setOnClickListener { startActivity(Intent(this, ArActivity::class.java)) }
+    binding.btnAdd.setOnClickListener {
+      startActivityForResult(Intent(this, NodeEditActivity::class.java), 100)
     }
+    vm.cloudedAnchors.observe(this, nodeManageRecyclerViewAdapter::setItems)
   }
 
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
     super.onActivityResult(requestCode, resultCode, data)
     if (requestCode == 100 && resultCode == RESULT_OK) {
-      vm.refresh()
+      showProgress()
+      vm.refresh {
+        hideProgress()
+      }
     }
   }
 }

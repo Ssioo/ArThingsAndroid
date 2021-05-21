@@ -11,13 +11,14 @@ import com.whoissio.arthings.src.infra.Constants.GLTF_RF_PATH
 import com.whoissio.arthings.src.infra.Constants.GLTF_RF_SCALE
 import dagger.Module
 import dagger.hilt.InstallIn
+import dagger.hilt.android.components.ActivityComponent
 import dagger.hilt.android.qualifiers.ActivityContext
+import dagger.hilt.android.scopes.ActivityScoped
 import dagger.hilt.components.SingletonComponent
 import java.util.concurrent.CompletableFuture
 import javax.inject.Inject
 
-@Module
-@InstallIn(SingletonComponent::class)
+@ActivityScoped
 class ArRendererProvider @Inject constructor(@ActivityContext val context: Context) {
 
   val gltfRf: RenderableSource = RenderableSource.builder()

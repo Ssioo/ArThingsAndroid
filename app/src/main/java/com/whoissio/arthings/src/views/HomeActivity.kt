@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.viewModels
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import com.whoissio.arthings.ApplicationClass.Companion.sharedPref
 import com.whoissio.arthings.R
 import com.whoissio.arthings.databinding.ActivityHomeBinding
 import com.whoissio.arthings.src.BaseActivity
@@ -16,30 +17,25 @@ class HomeActivity: BaseActivity.DBActivity<ActivityHomeBinding, HomeViewModel>(
   override val vm: HomeViewModel by viewModels()
 
   override fun initView(savedInstanceState: Bundle?) {
-    with(binding) {
-      btnSignIn.setOnClickListener { onClickBtnSignIn() }
-      btnGuest.setOnClickListener { onClickBtnGuestSignIn() }
-    }
+    binding.btnSignIn.setOnClickListener { onClickBtnSignIn() }
+    binding.btnGuest.setOnClickListener { onClickBtnGuestSignIn() }
+
+    vm.userId.value = sharedPref.getString("user_id" ,"")
+    vm.userPwd.value = sharedPref.getString("user_pwd" ,"")
   }
 
   private fun onClickBtnSignIn() {
-    if (vm.userId.value?.isEmpty() == true || vm.userPwd.value?.isEmpty() == true) {
-      showToast("빈값")
-      return
-    }
     showProgress()
-    Firebase.auth.signInWithEmailAndPassword(vm.userId.value!!, vm.userPwd.value!!)
-      .addOnCompleteListener(this) {
-        hideProgress()
-        if (it.isSuccessful) {
-          showToast("환영합니다. Admin님")
-          startActivity(Intent(this, NodeManageActivity::class.java))
-          finish()
-        } else {
-          showToast("로그인 실패 ${it.exception?.localizedMessage}")
-          it.exception?.printStackTrace()
-        }
+    vm.tryLogin {
+      hideProgress()
+      if (it) {
+        showToast("환영합니다. Admin님")
+        startActivity(Intent(this, NodeManageActivity::class.java))
+        finish()
+      } else {
+        showToast("로그인 실패")
       }
+    }
   }
 
   private fun onClickBtnGuestSignIn() {

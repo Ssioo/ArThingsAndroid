@@ -12,6 +12,8 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="120dp"
+        android:onClick="@{() -> item.onClickItem()}"
+        android:background="?attr/selectableItemBackground"
         android:paddingHorizontal="20dp"
         android:paddingVertical="12dp">
 
@@ -23,6 +25,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent"
+            android:text="@{item.data.address}"
             android:textSize="18sp"
             tools:text="Name" />
 
@@ -32,7 +35,6 @@
             android:id="@+id/node_id"
             tools:text="@tools:sample/lorem"
             android:text="@{item.data.id}"
-            android:onClick="@{() -> item.onClickNodeId()}"
             app:layout_constraintStart_toEndOf="@id/node_name"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"

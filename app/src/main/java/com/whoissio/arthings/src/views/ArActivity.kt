@@ -4,39 +4,43 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.camera2.*
+import android.media.Image
 import android.os.*
 import android.view.MotionEvent
-import android.view.View
 import android.widget.TextView
 import androidx.activity.viewModels
-import com.google.android.material.button.MaterialButton
 import com.google.ar.core.*
 import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.Node
 import com.google.ar.sceneform.assets.RenderableSource
 import com.google.ar.sceneform.math.Vector3
+import com.google.ar.sceneform.rendering.DpToMetersViewSizer
 import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.ViewRenderable
 import com.google.ar.sceneform.ux.BaseArFragment
 import com.google.ar.sceneform.ux.TransformableNode
 import com.google.gson.Gson
 import com.orhanobut.logger.Logger
+import com.whoissio.arthings.BuildConfig
 import com.whoissio.arthings.R
 import com.whoissio.arthings.databinding.ActivityArBinding
 import com.whoissio.arthings.src.BaseActivity
 import com.whoissio.arthings.src.infra.ArRendererProvider
+import com.whoissio.arthings.src.infra.Constants.DATE_FORMAT
 import com.whoissio.arthings.src.infra.Constants.GLTF_RF_PATH
 import com.whoissio.arthings.src.infra.Constants.GLTF_SOLAR_PATH
 import com.whoissio.arthings.src.infra.Constants.PERMISSION_ARRAY
 import com.whoissio.arthings.src.infra.Constants.PERMISSION_REQUEST_CODE
-import com.whoissio.arthings.src.infra.Constants.SAMPLE_NODE_MAC_ADDRESS
 import com.whoissio.arthings.src.infra.Helper.hasPermissions
 import com.whoissio.arthings.src.infra.Helper.launchPermissionSettings
 import com.whoissio.arthings.src.infra.Helper.shouldShowAnyRequestPermissionRationales
+import com.whoissio.arthings.src.infra.core.MockFunction
 import com.whoissio.arthings.src.infra.utils.*
 import com.whoissio.arthings.src.models.DeviceInfo
 import com.whoissio.arthings.src.viewmodels.ArViewModel
 import com.whoissio.arthings.src.views.components.MyArFragment
+import com.whoissio.arthings.src.views.components.NodeChoiceView
+import com.whoissio.arthings.src.views.components.NodeInfoView
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.*
 import javax.inject.Inject
@@ -44,15 +48,16 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.layout.activity_ar),
   BaseArFragment.OnTapArPlaneListener,
-  BaseArFragment.OnSessionInitializationListener
-{
+  BaseArFragment.OnSessionInitializationListener {
   override val vm: ArViewModel by viewModels()
-  @Inject lateinit var cloudAnchorManager: CloudAnchorManager
-  @Inject lateinit var arRendererProvider: ArRendererProvider
+  @Inject
+  lateinit var cloudAnchorManager: CloudAnchorManager
+  @Inject
+  lateinit var arRendererProvider: ArRendererProvider
 
-  private lateinit var arFragment: MyArFragment
+  private val arFragment: MyArFragment by lazy { supportFragmentManager.findFragmentById(R.id.ar_view) as MyArFragment }
 
-  private var nodeChoiceAnchorNode: AnchorNode? = null
+  private var nodeChoiceAnchorNode: AnchorNode = AnchorNode()
   private val cameraManager by lazy { getSystemService(CAMERA_SERVICE) as CameraManager }
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,47 +70,75 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
   }
 
   override fun initView(savedInstanceState: Bundle?) {
-    arFragment = supportFragmentManager.findFragmentById(R.id.ar_view) as MyArFragment
     arFragment.apply {
       setOnSessionInitializationListener(this@ArActivity)
       setOnTapArPlaneListener(this@ArActivity)
       arSceneView.scene.addOnUpdateListener { cloudAnchorManager.onUpdate() }
     }
 
-    with(binding) {
-      btnExport.setOnClickListener { onClickBtnExport() }
-      btnRefresh.setOnClickListener { onClickRefresh() }
-    }
+    binding.btnExport.setOnClickListener { onClickBtnExport() }
+    binding.btnRefresh.setOnClickListener { onClickRefresh() }
 
-    with(vm) {
-      isDepthApiEnabled.value = cameraManager.cameraIdList.any {
-        cameraManager.getCameraCharacteristics(it)
-          .get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
-          ?.contains(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) == true
-      }
+    vm.isDepthApiEnabled.value = cameraManager.cameraIdList.any {
+      cameraManager.getCameraCharacteristics(it)
+        .get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
+        ?.contains(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) == true
     }
   }
 
   override fun onTapPlane(hitResult: HitResult?, plane: Plane?, motionEvent: MotionEvent?) {
     val anchor = hitResult?.createAnchor() ?: return
+    val scannedBles = vm.scannedDevicesDataSortedByDistance.value ?: emptyList()
+    val readyToUploadBles = vm.notUploadedBleData.value ?: emptyList()
+    if (scannedBles.isEmpty()) {
+      return showAlert("Scan nearby ble nodes before registering an AR node")
+    }
+    if (readyToUploadBles.isEmpty()) {
+      return showAlert("No more node to be uploaded, check your node list")
+    }
+    val targetBleAddr = readyToUploadBles.first().first.address
+    Logger.d(targetBleAddr)
+    acquireConfidenceImage()
     arRendererProvider.nodeChoiceRenderer
-      .thenAccept { addArChoiceViewToScene(anchor, it) }
+      .thenAccept { addArChoiceViewToScene(anchor, it, targetBleAddr) }
       .exceptionally { onRenderError(it) }
   }
 
   override fun onSessionInitialization(session: Session?) {
     vm.cloudedAnchors.observe(this) {
-      it.forEach {
-        cloudAnchorManager.resolveCloudAnchor(session, it.id) {
-          onClickArButton(it, arRendererProvider.gltfSolar, GLTF_SOLAR_PATH, false)
-        }
+      it.filter { it.id.isNotEmpty() && it.room == 1 }
+        .forEach { anchor ->
+          cloudAnchorManager.resolveCloudAnchor(session, anchor.id) {
+            createArBleNode(it, arRendererProvider.gltfSolar to GLTF_SOLAR_PATH, anchor.address, anchor.type, false)
+          }
       }
     }
   }
 
-  // 전체 데이터 갱신
-  private fun onClickRefresh() {
+  private fun acquireConfidenceImage() {
+    var depthImage: Image? = null
+    var confidenceImage: Image? = null
+    try {
+      val frame = arFragment.arSceneView.session?.update()
+      depthImage = frame?.acquireRawDepthImage()
+      confidenceImage = frame?.acquireRawDepthConfidenceImage()
+      Logger.d("${depthImage?.width}, ${depthImage?.height}")
+    } catch (e: Exception) {
+      e.printStackTrace()
+    } finally {
+      depthImage?.close()
+      confidenceImage?.close()
+    }
+  }
 
+  // 전체 데이터 갱신
+  @MockFunction
+  private fun onClickRefresh() {
+    showProgress()
+    binding.root.postDelayed({
+      vm.refreshData()
+      hideProgress()
+    }, if (BuildConfig.DEBUG) 1000 else 5000)
   }
 
   private fun onClickBtnExport() {
@@ -120,90 +153,95 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
     })
   }
 
-  private fun createArNodeToScene(anchor: Anchor, renderable: ModelRenderable?, isNewAnchor: Boolean = true) {
-    val anchorNode = AnchorNode(anchor).apply {
+  private fun addArChoiceViewToScene(
+    anchor: Anchor,
+    renderable: ViewRenderable,
+    targetBleAddr: String
+  ) {
+    nodeChoiceAnchorNode.apply {
+      isEnabled = true
       setParent(arFragment.arSceneView.scene)
-    }
-    TransformableNode(arFragment.transformationSystem).apply {
-      setParent(anchorNode)
+      this.anchor = anchor
       this.renderable = renderable
-      setOnTapListener { hitTestResult, motionEvent ->
-
-      }
-      select()
     }
-    arRendererProvider.getNodeViewRenderer(R.layout.view_solar_node)
-      .thenAccept { setUpSolarNodeInfoView(it, anchorNode) }
-      .exceptionally { onRenderError(it) }
-
-    if (isNewAnchor) uploadAnchor(anchor)
+    NodeChoiceView(view = renderable.view, anchor = anchor)
+      .setOnClickListener { it, which ->
+        nodeChoiceAnchorNode.isEnabled = false
+        when (which) {
+          NodeChoiceView.ButtonChoice.BUTTON_SOLAR -> createArBleNode(it, arRendererProvider.gltfSolar to GLTF_SOLAR_PATH, targetBleAddr, "SOLAR")
+          NodeChoiceView.ButtonChoice.BUTTON_RF -> createArBleNode(it, arRendererProvider.gltfRf to GLTF_RF_PATH, targetBleAddr, "RF")
+          NodeChoiceView.ButtonChoice.BUTTON_CLOSE -> Unit
+        }
+      }
   }
 
-  private fun uploadAnchor(anchor: Anchor) {
-    try {
-      arFragment.arSceneView.let { it.session?.estimateFeatureMapQualityForHosting(it.arFrame?.camera?.pose) }
-        .also { Logger.d(it?.name) }
-      cloudAnchorManager.hostCloudAnchor(arFragment.arSceneView.session, anchor) {
-        vm.createNewHostAnchor(it, SAMPLE_NODE_MAC_ADDRESS)
-      }
-    } catch (e: Exception) {
-      e.printStackTrace()
-    }
-  }
-
-  private fun setUpSolarNodeInfoView(it: ViewRenderable, anchor: AnchorNode) {
-    it.view.apply {
-      val tvTemp = findViewById<TextView>(R.id.temperature)
-      val tvHumidity = findViewById<TextView>(R.id.humidity)
-
-      with(vm) {
-        temperature.observe(this@ArActivity) { tvTemp.text = String.format("%.1f", it) }
-        humidity.observe(this@ArActivity) { tvHumidity.text = String.format("%.1f", it) }
-      }
-    }
-    Node().apply {
-      localPosition = Vector3(0f, 0.06f, -0.02f)
-      this.renderable = it
-      setParent(anchor)
-    }
-  }
-
-  private fun addArChoiceViewToScene(anchor: Anchor, renderable: ViewRenderable) {
-    if (nodeChoiceAnchorNode != null) {
-      nodeChoiceAnchorNode?.anchor = anchor
-      return
-    }
-    nodeChoiceAnchorNode = AnchorNode(anchor)
-    renderable.view.apply {
-      findViewById<MaterialButton>(R.id.btn_solar).apply {
-        setOnTouchListener(this@ArActivity::onTouchArButton)
-        setOnClickListener { onClickArButton(anchor, arRendererProvider.gltfSolar, GLTF_SOLAR_PATH) }
-      }
-      findViewById<MaterialButton>(R.id.btn_rf).apply {
-        setOnTouchListener(this@ArActivity::onTouchArButton)
-        setOnClickListener { onClickArButton(anchor, arRendererProvider.gltfRf, GLTF_RF_PATH) }
-      }
-    }
-    nodeChoiceAnchorNode?.renderable = renderable
-    nodeChoiceAnchorNode?.setParent(arFragment.arSceneView.scene)
-  }
-
-  private fun onClickArButton(anchor: Anchor, renderer: RenderableSource, id: String, isNew: Boolean = true) {
-    nodeChoiceAnchorNode?.setParent(null)
+  private fun createArBleNode(
+    anchor: Anchor,
+    renderer: Pair<RenderableSource, String>,
+    targetBleAddr: String,
+    type: String,
+    isNewAnchor: Boolean = true
+  ) {
     ModelRenderable.builder()
-      .setSource(this, renderer)
-      .setRegistryId(id)
+      .setSource(this, renderer.first)
+      .setRegistryId(renderer.second)
       .build()
-      .thenAccept { createArNodeToScene(anchor, it, isNew) }
+      .thenAccept {
+        val anchorNode = AnchorNode(anchor).apply { setParent(arFragment.arSceneView.scene) }
+        TransformableNode(arFragment.transformationSystem).apply {
+          setParent(anchorNode)
+          this.renderable = it
+          setOnTapListener { hitTestResult, motionEvent ->
+
+          }
+          select()
+        }
+        val infoView = NodeInfoView(this, targetBleAddr).apply {
+          addDataView("Humid") {
+            0.48828125 * (it.getOrNull(27)?.toInt() ?: 0) - 6.0
+          }
+          addDataView("Temp") {
+            0.68640625 * (it.getOrNull(28)?.toInt() ?: 0) - 46.85
+          }
+          vm.scannedDevicesData.observe(this@ArActivity) {
+            it.filter { it.key.address == targetBleAddr }
+              .toList()
+              .firstOrNull()?.let {
+                onUpdate(it.second)
+              }
+          }
+        }
+        infoView.build()
+          .thenAccept { infoView.attach(anchorNode, it) }
+          .exceptionally { onRenderError(it) }
+        if (isNewAnchor) uploadAnchorToTargetAddr(anchor, targetBleAddr, type)
+      }
       .exceptionally { onRenderError(it) }
   }
 
-  private fun onTouchArButton(v: View?, event: MotionEvent?): Boolean {
-    when (event?.action) {
-      MotionEvent.ACTION_DOWN -> v?.alpha = 0.38f
-      MotionEvent.ACTION_UP -> v?.alpha = 1f
-    }
-    return false
+  private fun uploadAnchorToTargetAddr(anchor: Anchor, targetBleAddr: String, type: String) {
+    AlertDialog.Builder(this)
+      .setMessage("Do you want to host this anchor? to $targetBleAddr")
+      .setPositiveButton("Yes") { dialog, _ ->
+        dialog.dismiss()
+        showProgress()
+        try {
+          arFragment.arSceneView.let { it.session?.estimateFeatureMapQualityForHosting(it.arFrame?.camera?.pose) }
+            .also { Logger.d(it?.name) }
+          cloudAnchorManager.hostCloudAnchor(arFragment.arSceneView.session, anchor) {
+            hideProgress()
+            vm.createNewHostAnchor(it, targetBleAddr, 1, type)
+          }
+        } catch (e: Exception) {
+          hideProgress()
+          e.printStackTrace()
+        }
+      }
+      .setNegativeButton("No") { dialog, _ ->
+        dialog.dismiss()
+        anchor.detach()
+      }
+      .show()
   }
 
   private fun onRenderError(it: Throwable): Void? {

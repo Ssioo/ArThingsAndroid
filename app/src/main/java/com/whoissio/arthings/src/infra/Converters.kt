@@ -2,6 +2,7 @@ package com.whoissio.arthings.src.infra
 
 import android.view.Surface
 import com.google.ar.core.Pose
+import com.orhanobut.logger.Logger
 import com.whoissio.arthings.src.models.Device
 import com.whoissio.arthings.src.models.RssiTimeStamp
 import kotlin.math.pow
@@ -25,7 +26,8 @@ object Converters {
   @JvmStatic
   fun estimatedDistanceByBle(rssi: Int, txPower: Int): Double {
     if (rssi == 0) return -1.0
-    val ratio = rssi.toDouble().div(txPower)
+    Logger.d(rssi)
+    val ratio = rssi.toDouble().div(/*txPower*/ -59)
     if (ratio < 1.0) return ratio.pow(10.0)
     else return 0.89976 * ratio.pow(7.7095) + 0.111
   }

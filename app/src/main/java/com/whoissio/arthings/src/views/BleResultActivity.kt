@@ -1,14 +1,10 @@
 package com.whoissio.arthings.src.views
 
-import android.app.Application
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.view.LayoutInflater
 import androidx.activity.viewModels
 import androidx.core.content.FileProvider
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import com.github.mikephil.charting.data.LineData
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken

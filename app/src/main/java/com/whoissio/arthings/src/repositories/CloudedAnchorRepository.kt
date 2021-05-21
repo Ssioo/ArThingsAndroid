@@ -2,9 +2,11 @@ package com.whoissio.arthings.src.repositories
 
 import com.google.ar.core.Anchor
 import com.whoissio.arthings.src.apis.CloudAnchorDataSource
+import com.whoissio.arthings.src.infra.Constants.DATE_FORMAT
 import com.whoissio.arthings.src.infra.Helper.isAvailable
 import com.whoissio.arthings.src.models.CachedData
 import com.whoissio.arthings.src.models.CloudAnchor
+import com.whoissio.arthings.src.models.CloudAnchorNodeData
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
@@ -39,18 +41,18 @@ class CloudedAnchorRepository @Inject constructor(
       .observeOn(AndroidSchedulers.mainThread())
   }
 
-  fun createNewAnchorOnAddress(anchor: Anchor, address: String): Completable {
-    return dataSource.createNewCloudAnchor(anchor.cloudAnchorId, address)
+  fun createNewAnchorOnAddress(anchor: Anchor, address: String, room: Int, type: String): Completable {
+    return dataSource.createNewCloudAnchor(anchor.cloudAnchorId, address, room, type)
       .andThen {
-        cachedAnchors?.data?.add(CloudAnchor(anchor.cloudAnchorId, address, Date().toString()))
+        cachedAnchors?.data?.add(CloudAnchor(anchor.cloudAnchorId, address, DATE_FORMAT.format(Date())))
         Completable.complete()
       }
       .subscribeOn(Schedulers.io())
       .observeOn(AndroidSchedulers.mainThread())
   }
 
-  fun registerAddress(address: String): Completable {
-    return dataSource.createNewAddress(address)
+  fun registerAddress(address: String, data: List<CloudAnchorNodeData>): Completable {
+    return dataSource.createNewAddress(address, data)
       .andThen(refreshData())
       .flatMapCompletable { Completable.complete() }
       .subscribeOn(Schedulers.io())
