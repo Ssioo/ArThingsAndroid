@@ -7,14 +7,10 @@ import android.hardware.camera2.*
 import android.media.Image
 import android.os.*
 import android.view.MotionEvent
-import android.widget.TextView
 import androidx.activity.viewModels
 import com.google.ar.core.*
 import com.google.ar.sceneform.AnchorNode
-import com.google.ar.sceneform.Node
 import com.google.ar.sceneform.assets.RenderableSource
-import com.google.ar.sceneform.math.Vector3
-import com.google.ar.sceneform.rendering.DpToMetersViewSizer
 import com.google.ar.sceneform.rendering.ModelRenderable
 import com.google.ar.sceneform.rendering.ViewRenderable
 import com.google.ar.sceneform.ux.BaseArFragment
@@ -25,14 +21,14 @@ import com.whoissio.arthings.BuildConfig
 import com.whoissio.arthings.R
 import com.whoissio.arthings.databinding.ActivityArBinding
 import com.whoissio.arthings.src.BaseActivity
-import com.whoissio.arthings.src.infra.ArRendererProvider
-import com.whoissio.arthings.src.infra.Constants.DATE_FORMAT
+import com.whoissio.arthings.src.infra.utils.ArRendererProvider
 import com.whoissio.arthings.src.infra.Constants.GLTF_RF_PATH
 import com.whoissio.arthings.src.infra.Constants.GLTF_SOLAR_PATH
 import com.whoissio.arthings.src.infra.Constants.PERMISSION_ARRAY
 import com.whoissio.arthings.src.infra.Constants.PERMISSION_REQUEST_CODE
 import com.whoissio.arthings.src.infra.Helper.hasPermissions
 import com.whoissio.arthings.src.infra.Helper.launchPermissionSettings
+import com.whoissio.arthings.src.infra.Helper.parseFunction
 import com.whoissio.arthings.src.infra.Helper.shouldShowAnyRequestPermissionRationales
 import com.whoissio.arthings.src.infra.core.MockFunction
 import com.whoissio.arthings.src.infra.utils.*
@@ -46,14 +42,14 @@ import java.util.*
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.layout.activity_ar),
+class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.layout.activity_ar),
   BaseArFragment.OnTapArPlaneListener,
   BaseArFragment.OnSessionInitializationListener {
+
   override val vm: ArViewModel by viewModels()
-  @Inject
-  lateinit var cloudAnchorManager: CloudAnchorManager
-  @Inject
-  lateinit var arRendererProvider: ArRendererProvider
+
+  @Inject lateinit var cloudAnchorManager: CloudAnchorManager
+  @Inject lateinit var arRendererProvider: ArRendererProvider
 
   private val arFragment: MyArFragment by lazy { supportFragmentManager.findFragmentById(R.id.ar_view) as MyArFragment }
 
@@ -109,7 +105,7 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
       it.filter { it.id.isNotEmpty() && it.room == 1 }
         .forEach { anchor ->
           cloudAnchorManager.resolveCloudAnchor(session, anchor.id) {
-            createArBleNode(it, arRendererProvider.gltfSolar to GLTF_SOLAR_PATH, anchor.address, anchor.type, false)
+            createArBleNode(it, arRendererProvider.gltfSolar to GLTF_SOLAR_PATH, anchor.address, anchor.type)
           }
       }
     }
@@ -179,9 +175,9 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
     anchor: Anchor,
     renderer: Pair<RenderableSource, String>,
     targetBleAddr: String,
-    type: String,
-    isNewAnchor: Boolean = true
+    type: String
   ) {
+    val targetAnchor = vm.cloudedAnchors.value?.find { it.address == targetBleAddr } ?: return
     ModelRenderable.builder()
       .setSource(this, renderer.first)
       .setRegistryId(renderer.second)
@@ -197,12 +193,7 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
           select()
         }
         val infoView = NodeInfoView(this, targetBleAddr).apply {
-          addDataView("Humid") {
-            0.48828125 * (it.getOrNull(27)?.toInt() ?: 0) - 6.0
-          }
-          addDataView("Temp") {
-            0.68640625 * (it.getOrNull(28)?.toInt() ?: 0) - 46.85
-          }
+          targetAnchor.data.forEach { c -> addDataView(c.name) { c.parseFunction(it) } }
           vm.scannedDevicesData.observe(this@ArActivity) {
             it.filter { it.key.address == targetBleAddr }
               .toList()
@@ -214,7 +205,7 @@ class ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.lay
         infoView.build()
           .thenAccept { infoView.attach(anchorNode, it) }
           .exceptionally { onRenderError(it) }
-        if (isNewAnchor) uploadAnchorToTargetAddr(anchor, targetBleAddr, type)
+        if (targetAnchor.id.isEmpty()) uploadAnchorToTargetAddr(anchor, targetBleAddr, type)
       }
       .exceptionally { onRenderError(it) }
   }

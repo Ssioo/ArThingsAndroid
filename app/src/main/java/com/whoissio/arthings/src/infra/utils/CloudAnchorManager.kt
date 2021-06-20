@@ -10,15 +10,20 @@ import javax.inject.Inject
 @Module
 @InstallIn(SingletonComponent::class)
 class CloudAnchorManager @Inject constructor() {
-  private val pendingAnchors: MutableMap<Anchor, (Anchor) -> Unit> = HashMap()
 
-  fun hostCloudAnchor(session: Session?, anchor: Anchor, listener: (Anchor) -> Unit) {
+  fun interface OnCompleteListener {
+    fun onComplete(anchor: Anchor)
+  }
+
+  private val pendingAnchors: MutableMap<Anchor, OnCompleteListener> = HashMap()
+
+  fun hostCloudAnchor(session: Session?, anchor: Anchor, listener: OnCompleteListener) {
     session ?: return
     val newAnchor = session.hostCloudAnchorWithTtl(anchor, 1)
     pendingAnchors[newAnchor] = listener
   }
 
-   fun resolveCloudAnchor(session: Session?, anchorId: String, listener: (Anchor) -> Unit) {
+   fun resolveCloudAnchor(session: Session?, anchorId: String, listener: OnCompleteListener) {
      session ?: return
      val newAnchor = session.resolveCloudAnchor(anchorId)
      pendingAnchors[newAnchor] = listener
@@ -28,7 +33,7 @@ class CloudAnchorManager @Inject constructor() {
     val toRemove = mutableListOf<Anchor>()
     pendingAnchors.forEach { (key, value) ->
       if (!listOf(Anchor.CloudAnchorState.TASK_IN_PROGRESS, Anchor.CloudAnchorState.NONE).contains(key.cloudAnchorState)) {
-        value(key)
+        value.onComplete(key)
         toRemove.add(key)
       }
     }

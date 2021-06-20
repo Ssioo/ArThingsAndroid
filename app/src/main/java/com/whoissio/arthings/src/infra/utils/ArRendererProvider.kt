@@ -1,4 +1,4 @@
-package com.whoissio.arthings.src.infra
+package com.whoissio.arthings.src.infra.utils
 
 import android.content.Context
 import android.net.Uri
@@ -7,14 +7,11 @@ import com.google.ar.sceneform.assets.RenderableSource
 import com.google.ar.sceneform.rendering.DpToMetersViewSizer
 import com.google.ar.sceneform.rendering.ViewRenderable
 import com.whoissio.arthings.R
+import com.whoissio.arthings.src.infra.Constants
 import com.whoissio.arthings.src.infra.Constants.GLTF_RF_PATH
 import com.whoissio.arthings.src.infra.Constants.GLTF_RF_SCALE
-import dagger.Module
-import dagger.hilt.InstallIn
-import dagger.hilt.android.components.ActivityComponent
 import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.scopes.ActivityScoped
-import dagger.hilt.components.SingletonComponent
 import java.util.concurrent.CompletableFuture
 import javax.inject.Inject
 

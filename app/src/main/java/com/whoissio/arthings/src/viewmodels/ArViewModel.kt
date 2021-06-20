@@ -108,7 +108,7 @@ class ArViewModel @Inject constructor(
   @MockFunction
   fun refreshData() {
     val currentDeviceList = scannedDevices.value?.toMutableMap() ?: mutableMapOf()
-    val newTestData = SAMPLE_NODE_ARRAY.map { System.currentTimeMillis() to -(Math.random() * 10).toInt() / 10 -56 }
+    val newTestData = SAMPLE_NODE_ARRAY.map { System.currentTimeMillis() to -(Math.random() * 10).toInt() / 10 - 56 }
     val prev = currentDeviceList.filter { SAMPLE_NODE_ARRAY.contains(it.key.address) }.toMutableMap()
     val currentDeviceDataList = scannedDevicesData.value?.toMutableMap() ?: mutableMapOf()
 
@@ -125,6 +125,10 @@ class ArViewModel @Inject constructor(
     }
     scannedDevices.value = currentDeviceList
     scannedDevicesData.value = currentDeviceDataList
+  }
+
+  fun refreshDataReal() {
+
   }
 
   override fun onCleared() {

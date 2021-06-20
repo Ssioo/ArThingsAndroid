@@ -11,7 +11,7 @@ import dagger.hilt.android.AndroidEntryPoint
 class ErrorActivity : BaseActivity.VBActivity<ActivityErrorBinding>() {
   override val bindingProvider: (LayoutInflater) -> ActivityErrorBinding = ActivityErrorBinding::inflate
 
-  private val lastActivityIntent by lazy { intent.getParcelableExtra<Intent>("Intent") }
+  private val lastActivityIntent: Intent? by lazy { intent.getParcelableExtra("Intent") }
   private val lastError by lazy { intent.getSerializableExtra("Error") as? Throwable }
 
   override fun initView(savedInstanceState: Bundle?) {

@@ -9,16 +9,20 @@ import android.provider.Settings
 import android.view.View
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.datastore.core.DataStore
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import com.whoissio.arthings.BuildConfig
 import com.whoissio.arthings.src.BaseActivity
 import com.whoissio.arthings.src.infra.Constants.PERMISSION_ARRAY
 import com.whoissio.arthings.src.models.CachedData
+import com.whoissio.arthings.src.models.CloudAnchorNodeData
 import java.util.*
+import java.util.prefs.Preferences
 import kotlin.math.abs
 
 object Helper {
+
   fun Context.hasPermissions(): Boolean = PERMISSION_ARRAY.all {
     ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
   }
@@ -42,10 +46,8 @@ object Helper {
       View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
   }
 
-  fun CachedData<*>.isAvailable(): Boolean {
-    val now = Date()
-    return abs(cachedAt.time - now.time) <= if (BuildConfig.DEBUG) 30 * 1000 else 300 * 1000 // 300 sec = 5 min
-  }
+  fun CachedData<*>.isAvailable(): Boolean =
+    abs(cachedAt.time - Date().time) <= if (BuildConfig.DEBUG) 30 * 1000 else 300 * 1000 // 300 sec = 5 min
 
   fun <T, K, R> LiveData<T>.combine(other: LiveData<K>, block: (T?, K?) -> R): LiveData<R> {
     val result = MediatorLiveData<R>()
@@ -71,4 +73,12 @@ object Helper {
     val mockRssi = listOf((-(Math.random() * 30).toInt() - 50).toByte()) // -50 dbm ~ -80 dbm
     return prefix.plus(uuid).plus(major).plus(mockData1).plus(mockData2).plus(mockRssi).toByteArray()
   }
+
+  fun CloudAnchorNodeData.parseFunction(bytes: ByteArray): Double {
+    val a = function.substringBetween("x", "=").toDouble()
+    val op = function.substringAfter("x").firstOrNull()
+    return a * (bytes.getOrNull(this.byteIdx) ?: 0).toInt() + (if (op == null) 0.0 else function.substringAfterLast(op).toDouble())
+  }
+
+  fun String.substringBetween(prefix: String, suffix: String): String = substringAfter(prefix).substringBeforeLast(suffix)
 }

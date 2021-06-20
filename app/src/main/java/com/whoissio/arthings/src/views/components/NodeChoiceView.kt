@@ -28,21 +28,15 @@ class NodeChoiceView(val view: View, val anchor: Anchor) {
   fun setOnClickListener(onClickListener: OnClickListener) {
     binding.btnSolar.apply {
       setOnTouchListener(this@NodeChoiceView::onTouchArButton)
-      setOnClickListener {
-        onClickListener.onClick(anchor, ButtonChoice.BUTTON_SOLAR)
-      }
+      setOnClickListener { onClickListener.onClick(anchor, ButtonChoice.BUTTON_SOLAR) }
     }
     binding.btnRf.apply {
       setOnTouchListener(this@NodeChoiceView::onTouchArButton)
-      setOnClickListener {
-        onClickListener.onClick(anchor, ButtonChoice.BUTTON_RF)
-      }
+      setOnClickListener { onClickListener.onClick(anchor, ButtonChoice.BUTTON_RF) }
     }
     binding.btnClose.apply {
       setOnTouchListener(this@NodeChoiceView::onTouchArButton)
-      setOnClickListener {
-        onClickListener.onClick(anchor, ButtonChoice.BUTTON_CLOSE)
-      }
+      setOnClickListener { onClickListener.onClick(anchor, ButtonChoice.BUTTON_CLOSE) }
     }
   }
 
