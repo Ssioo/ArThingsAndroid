@@ -4,8 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.annotation.LayoutRes
 import com.google.ar.sceneform.assets.RenderableSource
-import com.google.ar.sceneform.rendering.DpToMetersViewSizer
-import com.google.ar.sceneform.rendering.ViewRenderable
+import com.google.ar.sceneform.rendering.*
 import com.whoissio.arthings.R
 import com.whoissio.arthings.src.infra.Constants
 import com.whoissio.arthings.src.infra.Constants.GLTF_RF_PATH
@@ -42,5 +41,9 @@ class ArRendererProvider @Inject constructor(@ActivityContext val context: Conte
       .setView(context, id)
       .setSizer(DpToMetersViewSizer(1000))
       .build()
+  }
+
+  fun getPlaneRenderer(): CompletableFuture<Material> {
+    return MaterialFactory.makeOpaqueWithColor(context, Color(android.graphics.Color.RED))
   }
 }

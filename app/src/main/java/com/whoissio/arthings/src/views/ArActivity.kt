@@ -11,7 +11,9 @@ import androidx.activity.viewModels
 import com.google.ar.core.*
 import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.assets.RenderableSource
+import com.google.ar.sceneform.math.Vector3
 import com.google.ar.sceneform.rendering.ModelRenderable
+import com.google.ar.sceneform.rendering.ShapeFactory
 import com.google.ar.sceneform.rendering.ViewRenderable
 import com.google.ar.sceneform.ux.BaseArFragment
 import com.google.ar.sceneform.ux.TransformableNode
@@ -98,6 +100,14 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
     arRendererProvider.nodeChoiceRenderer
       .thenAccept { addArChoiceViewToScene(anchor, it, targetBleAddr) }
       .exceptionally { onRenderError(it) }
+    arRendererProvider.getPlaneRenderer()
+      .thenAccept {
+        val renderable = ShapeFactory.makeSphere(0.1f, Vector3(0.0f, 0.15f, 0.0f), it)
+        AnchorNode(anchor).apply {
+          this.renderable = renderable
+          setParent(arFragment.arSceneView.scene)
+        }
+      }
   }
 
   override fun onSessionInitialization(session: Session?) {
