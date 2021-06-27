@@ -1,5 +1,7 @@
 package com.whoissio.arthings.src.infra
 
+import android.content.Context
+import android.util.TypedValue
 import android.view.Surface
 import com.google.ar.core.Pose
 import com.orhanobut.logger.Logger
@@ -19,6 +21,13 @@ object Converters {
       else -> throw java.lang.RuntimeException("Unknown rotation $this")
     }
   }
+
+  fun Float.toPx(context: Context): Float =
+    TypedValue.applyDimension(
+      TypedValue.COMPLEX_UNIT_DIP,
+      this,
+      context.resources.displayMetrics
+    )
 
   fun Pose.distanceBetween(other: Pose) =
     sqrt((tx() - other.tx()).pow(2f) + (ty() - other.ty()).pow(2f) + (tz() - other.tz()).pow(2f))

@@ -31,6 +31,8 @@ class ArViewModel @Inject constructor(
   private val cloudAnchorRepo: CloudedAnchorRepository
 ) : BaseViewModel() {
 
+  val isAddableOpen = MutableLiveData(false)
+
   @Inject lateinit var bleSignalScanner: BleSignalScanner
   val isScanning = AtomicBoolean(false)
   val scannedDevices: MutableLiveData<Map<Device, RssiTimeStamp>> = MutableLiveData(mapOf())

@@ -29,6 +29,12 @@ class ArRendererProvider @Inject constructor(@ActivityContext val context: Conte
     .setRecenterMode(RenderableSource.RecenterMode.ROOT)
     .build()
 
+  val gltfExclamation: RenderableSource = RenderableSource.builder()
+    .setSource(context, Uri.parse(Constants.GLTF_EXCLAMATION_PATH), RenderableSource.SourceType.GLTF2)
+    .setScale(Constants.GLTF_EXCLAMATION_SCALE)
+    .setRecenterMode(RenderableSource.RecenterMode.ROOT)
+    .build()
+
   val nodeChoiceRenderer: CompletableFuture<ViewRenderable> by lazy {
     ViewRenderable.builder()
       .setView(context, R.layout.view_node_attacher)
@@ -43,7 +49,7 @@ class ArRendererProvider @Inject constructor(@ActivityContext val context: Conte
       .build()
   }
 
-  fun getPlaneRenderer(): CompletableFuture<Material> {
-    return MaterialFactory.makeOpaqueWithColor(context, Color(android.graphics.Color.RED))
+  fun getPlaneRenderer(r: Float, g: Float, b: Float, a: Float): CompletableFuture<Material> {
+    return MaterialFactory.makeTransparentWithColor(context, Color().apply { set(r, g, b, a) })
   }
 }

@@ -7,6 +7,7 @@ import android.hardware.camera2.*
 import android.media.Image
 import android.os.*
 import android.view.MotionEvent
+import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.activity.viewModels
 import com.google.ar.core.*
 import com.google.ar.sceneform.AnchorNode
@@ -23,11 +24,13 @@ import com.whoissio.arthings.BuildConfig
 import com.whoissio.arthings.R
 import com.whoissio.arthings.databinding.ActivityArBinding
 import com.whoissio.arthings.src.BaseActivity
+import com.whoissio.arthings.src.infra.Constants
 import com.whoissio.arthings.src.infra.utils.ArRendererProvider
 import com.whoissio.arthings.src.infra.Constants.GLTF_RF_PATH
 import com.whoissio.arthings.src.infra.Constants.GLTF_SOLAR_PATH
 import com.whoissio.arthings.src.infra.Constants.PERMISSION_ARRAY
 import com.whoissio.arthings.src.infra.Constants.PERMISSION_REQUEST_CODE
+import com.whoissio.arthings.src.infra.Converters.toPx
 import com.whoissio.arthings.src.infra.Helper.hasPermissions
 import com.whoissio.arthings.src.infra.Helper.launchPermissionSettings
 import com.whoissio.arthings.src.infra.Helper.parseFunction
@@ -58,16 +61,12 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
   private var nodeChoiceAnchorNode: AnchorNode = AnchorNode()
   private val cameraManager by lazy { getSystemService(CAMERA_SERVICE) as CameraManager }
 
-  override fun onCreate(savedInstanceState: Bundle?) {
+  override fun initView(savedInstanceState: Bundle?) {
     if (!hasPermissions()) {
       return if (shouldShowAnyRequestPermissionRationales()) launchPermissionSettings()
       else requestPermissions(PERMISSION_ARRAY, PERMISSION_REQUEST_CODE)
     }
     if (!hasValidARCoreAndUpToDate()) return
-    super.onCreate(savedInstanceState)
-  }
-
-  override fun initView(savedInstanceState: Bundle?) {
     arFragment.apply {
       setOnSessionInitializationListener(this@ArActivity)
       setOnTapArPlaneListener(this@ArActivity)
@@ -76,13 +75,108 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
 
     binding.btnExport.setOnClickListener { onClickBtnExport() }
     binding.btnRefresh.setOnClickListener { onClickRefresh() }
+    binding.btnAdd.setOnClickListener { onClickAddNode() }
+    binding.btnRender.setOnClickListener { findNodeAreas() }
+    binding.addableNode1.setOnClickListener {
+
+    }
+    binding.addableNode2.setOnClickListener {
+
+    }
+    binding.addableNode3.setOnClickListener {
+
+    }
 
     vm.isDepthApiEnabled.value = cameraManager.cameraIdList.any {
       cameraManager.getCameraCharacteristics(it)
         .get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
         ?.contains(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) == true
     }
+    vm.isAddableOpen.observe(this, this::onChangeNodeAddable)
   }
+
+  private fun findNodeAreas() {
+    /* 화면 프레임으로부터 NodeArea 획득한 후 render*/
+    showProgress()
+    binding.root.postDelayed({
+      val frame = arFragment.arSceneView.session?.update()
+      acquireNodeArea(frame).forEach {
+        renderNodeAreaOverlayOn(it, frame)
+      }
+      hideProgress()
+    }, if (BuildConfig.DEBUG) 1000 else 5000)
+  }
+
+  /* 화면 프레임에서 중요 영역을 뽑아 냄 */
+  private fun acquireNodeArea(frame: Frame?): List<Any> {
+    val image: Image?
+    return try {
+      image = frame?.acquireCameraImage()
+      /* 무언가 image로부터 중요 영역을 뽑아냄 */
+      image?.close()
+      return emptyList()
+      /*listOf(
+        NodeArea(300f, 720f, 0.2f, 0),
+        NodeArea(400f, 960f, 0.1f, 1),
+        NodeArea(700f, 840f, 0.2f, 2),
+      ) // 데모*/
+    } catch (e: Exception) {
+      e.printStackTrace()
+      emptyList()
+    }
+  }
+
+  /* 화면 x,y 픽셀 좌표를 토대로, 구역 Overlay 생성 */
+  private fun renderNodeAreaOverlayOn(nodeArea: Any, frame: Frame?) {
+    /*frame?.hitTest(nodeArea.pxX, nodeArea.pxY)?.also { Logger.d(it) }?.firstOrNull()?.let {
+      val anchor = it.createAnchor()
+      when (nodeArea.type) {
+        0 -> arRendererProvider.getPlaneRenderer(1f, 0f, 0f, 0.1f)
+        1 -> arRendererProvider.getPlaneRenderer(0f, 1f, 0f, 0.1f)
+        else -> arRendererProvider.getPlaneRenderer(0f, 0f, 1f, 0.1f)
+      }
+        .thenAccept {
+          val parentNode = AnchorNode(anchor).apply {
+            setParent(arFragment.arSceneView.scene)
+          }
+          AnchorNode().apply {
+            this.renderable = ShapeFactory.makeSphere(nodeArea.radius, Vector3(0.0f, 0.0f, 0.0f), it)
+            setParent(parentNode)
+          }
+          if (nodeArea.type == 1) {
+            ModelRenderable.builder()
+              .setRegistryId(Constants.GLTF_EXCLAMATION_PATH)
+              .setSource(this, arRendererProvider.gltfExclamation)
+              .build()
+              .thenAccept {
+                AnchorNode().apply {
+                  localPosition = Vector3(0f, 0.06f, -0.02f)
+                  this.renderable = it
+                  setParent(parentNode)
+                }
+              }
+          }
+        }
+    }*/
+  }
+
+  private fun onChangeNodeAddable(it: Boolean) {
+    listOf(
+      binding.nodeAddGroup.animate().translationY(if (it) 0f else 250f.toPx(this)),
+      binding.btnAdd.animate().rotation(if (it) -45f else 0f)
+        .translationY(if (it) (-250f).toPx(this) else 0f),
+    ).forEach {
+      it.setDuration(500)
+        .setInterpolator(AccelerateDecelerateInterpolator())
+        .start()
+    }
+  }
+
+  private fun onClickAddNode() {
+    vm.isAddableOpen.value = !vm.isAddableOpen.value!!
+  }
+
+  var countTemp = 1
 
   override fun onTapPlane(hitResult: HitResult?, plane: Plane?, motionEvent: MotionEvent?) {
     val anchor = hitResult?.createAnchor() ?: return
@@ -100,14 +194,37 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
     arRendererProvider.nodeChoiceRenderer
       .thenAccept { addArChoiceViewToScene(anchor, it, targetBleAddr) }
       .exceptionally { onRenderError(it) }
-    arRendererProvider.getPlaneRenderer()
-      .thenAccept {
-        val renderable = ShapeFactory.makeSphere(0.1f, Vector3(0.0f, 0.15f, 0.0f), it)
-        AnchorNode(anchor).apply {
-          this.renderable = renderable
-          setParent(arFragment.arSceneView.scene)
-        }
+    /*when (countTemp) {
+      1 -> {
+        // 빨강
+        arRendererProvider.getPlaneRenderer(1f, 0f, 0f, 0.1f)
+          .thenAccept {
+            val parentNode = AnchorNode(anchor).apply {
+              setParent(arFragment.arSceneView.scene)
+            }
+            AnchorNode(anchor).apply {
+              this.renderable = ShapeFactory.makeSphere(Math.random().div(3).toFloat(), Vector3(0.0f, 0.0f, 0.0f), it)
+              setParent(parentNode)
+            }
+
+          }
+        countTemp += 1
       }
+      else -> {
+        // 초록
+        arRendererProvider.getPlaneRenderer(0f, 1f, 0f, 0.1f)
+          .thenAccept {
+            val parentNode = AnchorNode(anchor).apply {
+              setParent(arFragment.arSceneView.scene)
+            }
+            AnchorNode(anchor).apply {
+              this.renderable = ShapeFactory.makeSphere(Math.random().div(2).toFloat(), Vector3(0.0f, 0.15f, 0.0f), it)
+              setParent(parentNode)
+            }
+          }
+      }
+    }*/
+
   }
 
   override fun onSessionInitialization(session: Session?) {
@@ -216,6 +333,18 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
           .thenAccept { infoView.attach(anchorNode, it) }
           .exceptionally { onRenderError(it) }
         if (targetAnchor.id.isEmpty()) uploadAnchorToTargetAddr(anchor, targetBleAddr, type)
+
+        /*ModelRenderable.builder()
+          .setRegistryId(Constants.GLTF_EXCLAMATION_PATH)
+          .setSource(this, arRendererProvider.gltfExclamation)
+          .build()
+          .thenAccept {
+            AnchorNode().apply {
+              localPosition = Vector3(0f, 0.06f, -0.02f)
+              this.renderable = it
+              setParent(anchorNode)
+            }
+          }*/
       }
       .exceptionally { onRenderError(it) }
   }
