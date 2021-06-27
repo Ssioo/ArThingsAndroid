@@ -3,6 +3,10 @@ package com.whoissio.arthings.src.models
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
+enum class DeviceStatus {
+  GOOD, LOW_DUTY_CYCLE, NOT_UPDATED_LONG, MAL_DATA
+}
+
 @Parcelize
 data class Device(
   val address: String,

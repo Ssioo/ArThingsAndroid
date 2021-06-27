@@ -9,17 +9,12 @@ import com.google.ar.core.Anchor
 import com.orhanobut.logger.Logger
 import com.whoissio.arthings.ApplicationClass.Companion.scanner
 import com.whoissio.arthings.src.BaseViewModel
-import com.whoissio.arthings.src.infra.Constants
 import com.whoissio.arthings.src.infra.Constants.SAMPLE_NODE_ARRAY
-import com.whoissio.arthings.src.infra.Converters
 import com.whoissio.arthings.src.infra.Helper.combine
 import com.whoissio.arthings.src.infra.Helper.randomBleRecordGenerator
 import com.whoissio.arthings.src.infra.core.MockFunction
 import com.whoissio.arthings.src.infra.utils.BleSignalScanner
-import com.whoissio.arthings.src.models.BaseEvent
-import com.whoissio.arthings.src.models.CloudAnchor
-import com.whoissio.arthings.src.models.Device
-import com.whoissio.arthings.src.models.RssiTimeStamp
+import com.whoissio.arthings.src.models.*
 import com.whoissio.arthings.src.repositories.CloudedAnchorRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.reactivex.rxjava3.kotlin.addTo
@@ -31,12 +26,15 @@ class ArViewModel @Inject constructor(
   private val cloudAnchorRepo: CloudedAnchorRepository
 ) : BaseViewModel() {
 
+  val isAddableOpen = MutableLiveData(false)
+
   @Inject lateinit var bleSignalScanner: BleSignalScanner
   val isScanning = AtomicBoolean(false)
   val scannedDevices: MutableLiveData<Map<Device, RssiTimeStamp>> = MutableLiveData(mapOf())
 
   val isDepthApiEnabled = MutableLiveData(false)
-  val cloudedAnchors: MutableLiveData<List<CloudAnchor>> = MutableLiveData(emptyList())
+  val cloudedAnchors: MutableLiveData<List<CloudBleDevice>> = MutableLiveData(emptyList())
+  val cloudedNodeAreas: MutableLiveData<List<CloudNodeAreaAnchor>> = MutableLiveData(emptyList())
 
   val closestScannedDevice: LiveData<Pair<Device, Int>?> = Transformations.map(scannedDevices) {
     it.map {

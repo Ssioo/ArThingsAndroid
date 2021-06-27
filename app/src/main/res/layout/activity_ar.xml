@@ -38,23 +38,29 @@
             android:id="@+id/box_new_address"
             layout="@layout/view_new_address" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btn_refresh"
-            android:text="REFRESH DATA"
-            android:letterSpacing="0"
-            android:insetRight="0dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:insetLeft="0dp"
-            android:minHeight="0dp"
-            android:minWidth="0dp"
-            android:paddingVertical="6dp"
-            android:paddingHorizontal="28dp"
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btn_render"
+            android:src="@drawable/ic_auto_find"
+            app:backgroundTint="@color/purple_500"
+            app:tint="@color/white"
             app:cornerRadius="20dp"
+            android:layout_marginStart="20dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center"
-            android:layout_marginBottom="60dp" />
+            android:layout_gravity="bottom|start"
+            android:layout_marginBottom="90dp" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btn_refresh"
+            android:src="@drawable/ic_refresh"
+            app:backgroundTint="@color/purple_500"
+            app:tint="@color/white"
+            app:cornerRadius="20dp"
+            android:layout_marginStart="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|start"
+            android:layout_marginBottom="20dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_export"
@@ -73,6 +79,77 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|center"
             android:layout_marginBottom="20dp" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btn_add"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|right"
+            android:src="@drawable/ic_add"
+            app:backgroundTint="@color/purple_500"
+            app:tint="@color/white"
+            android:layout_marginBottom="20dp"
+            android:layout_marginEnd="20dp" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/node_add_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|right"
+            android:translationY="250dp"
+            android:layout_marginRight="20dp"
+            >
+
+            <ImageView
+                android:layout_width="50dp"
+                android:layout_height="250dp"
+                android:src="@drawable/bg_opaque_lightgrey_corner_50"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                 />
+
+            <ImageView
+                android:id="@+id/addable_node_1"
+                android:layout_width="58dp"
+                android:layout_height="58dp"
+                android:src="@drawable/img_solar_node"
+                android:padding="4dp"
+                android:background="@drawable/bg_circle_grey_stroke_1"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="15dp"/>
+
+            <ImageView
+                android:id="@+id/addable_node_2"
+                android:layout_width="58dp"
+                android:layout_height="58dp"
+                android:src="@drawable/img_solar_node"
+                android:padding="4dp"
+                android:background="@drawable/bg_circle_grey_stroke_1"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/addable_node_1"
+                android:layout_marginTop="15dp"/>
+
+            <ImageView
+                android:id="@+id/addable_node_3"
+                android:layout_width="58dp"
+                android:layout_height="58dp"
+                android:src="@drawable/img_solar_node"
+                android:padding="4dp"
+                android:background="@drawable/bg_circle_grey_stroke_1"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/addable_node_2"
+                android:layout_marginTop="15dp"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>

@@ -27,8 +27,10 @@ object Constants {
 
     const val GLTF_SOLAR_PATH = "file:///android_asset/models/solar_battery_2.gltf"
     const val GLTF_RF_PATH = "file:///android_asset/models/rf_module.gltf"
+    const val GLTF_EXCLAMATION_PATH = "file:///android_asset/models/exclamation.gltf"
     const val GLTF_SOLAR_SCALE = 0.00008f
     const val GLTF_RF_SCALE = 0.003f
+    const val GLTF_EXCLAMATION_SCALE = 1f
 
     const val CLOUD_ANCHOR_BASE_URL = "https://arcorecloudanchor.googleapis.com"
 

@@ -1,15 +1,12 @@
 package com.whoissio.arthings.src.views
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.widget.TextView
 import androidx.activity.viewModels
-import androidx.core.view.children
 import com.whoissio.arthings.R
 import com.whoissio.arthings.databinding.ActivityNodeEditBinding
 import com.whoissio.arthings.databinding.ItemNodeDataConverterBinding
 import com.whoissio.arthings.src.BaseActivity
-import com.whoissio.arthings.src.models.CloudAnchorNodeData
+import com.whoissio.arthings.src.models.CloudBleDeviceData
 import com.whoissio.arthings.src.viewmodels.NodeEditViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -24,7 +21,7 @@ class NodeEditActivity: BaseActivity.DBActivity<ActivityNodeEditBinding, NodeEdi
     binding.btnSubmit.setOnClickListener { onClickSubmit() }
     binding.btnAdd.setOnClickListener { onClickAddData() }
 
-    vm.selectedCloudAnchor.observe(this) {
+    vm.selectedCloudBleDevice.observe(this) {
       if (it != null) {
         binding.etNewAddress.setText(it.address)
         binding.tvAnchorId.text = it.id
@@ -65,7 +62,7 @@ class NodeEditActivity: BaseActivity.DBActivity<ActivityNodeEditBinding, NodeEdi
       val byteIdx = it.nodeByte.text.toString().toIntOrNull() ?: 0
       val name = it.nodeName.text.toString()
       val function = it.nodeFunction.text.toString()
-      CloudAnchorNodeData(name, byteIdx, function)
+      CloudBleDeviceData(name, byteIdx, function)
     }
     showProgress()
     vm.submit(address, dataList) {

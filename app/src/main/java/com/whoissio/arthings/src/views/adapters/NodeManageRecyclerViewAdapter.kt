@@ -4,10 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.activity.result.contract.ActivityResultContracts
 import com.orhanobut.logger.Logger
 import com.whoissio.arthings.databinding.ItemRowNodeBinding
-import com.whoissio.arthings.src.models.CloudAnchor
+import com.whoissio.arthings.src.models.CloudBleDevice
 import com.whoissio.arthings.src.views.NodeEditActivity
 import com.whoissio.arthings.src.views.NodeManageActivity
 import com.whoissio.arthings.src.views.adapters.item.BaseItem
@@ -17,13 +16,13 @@ import javax.inject.Inject
 
 @ActivityScoped
 class NodeManageRecyclerViewAdapter @Inject constructor(@ActivityContext private val context: Context) :
-  BaseRecyclerViewAdapter<CloudAnchor, ItemRowNodeBinding>() {
+  BaseRecyclerViewAdapter<CloudBleDevice, ItemRowNodeBinding>() {
   override val bindingProvider: (LayoutInflater, ViewGroup?, Boolean) -> ItemRowNodeBinding =
     ItemRowNodeBinding::inflate
 
-  override val controller: (CloudAnchor) -> BaseItem<CloudAnchor> = { NodeManageItem(it) }
+  override val controller: (CloudBleDevice) -> BaseItem<CloudBleDevice> = { NodeManageItem(it) }
 
-  inner class NodeManageItem(override val data: CloudAnchor) : BaseItem<CloudAnchor> {
+  inner class NodeManageItem(override val data: CloudBleDevice) : BaseItem<CloudBleDevice> {
     fun onClickItem() {
       Logger.d(data)
       (context as? NodeManageActivity)?.let {

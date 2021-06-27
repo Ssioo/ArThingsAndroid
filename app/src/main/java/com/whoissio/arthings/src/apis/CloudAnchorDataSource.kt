@@ -4,8 +4,10 @@ import com.google.firebase.database.ktx.database
 import com.google.firebase.database.ktx.getValue
 import com.google.firebase.ktx.Firebase
 import com.whoissio.arthings.src.infra.Constants.DATE_FORMAT
-import com.whoissio.arthings.src.models.CloudAnchor
-import com.whoissio.arthings.src.models.CloudAnchorNodeData
+import com.whoissio.arthings.src.models.BaseCloudAnchor
+import com.whoissio.arthings.src.models.CloudBleDevice
+import com.whoissio.arthings.src.models.CloudBleDeviceData
+import com.whoissio.arthings.src.models.DeviceStatus
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
@@ -19,12 +21,13 @@ import javax.inject.Inject
 class CloudAnchorDataSource @Inject constructor() {
 
   private val anchorDb = Firebase.database.getReference("anchors")
+  private val devicesDb = Firebase.database.getReference("devices")
 
-  fun fetchCloudedAnchors(): Single<List<CloudAnchor>> {
+  fun fetchCloudedAnchors(): Single<List<BaseCloudAnchor<CloudBleDevice>>> {
     return Single.create { out ->
       anchorDb.get()
         .addOnSuccessListener {
-          out.onSuccess(if (it.value == null) emptyList() else it.children.mapNotNull { it.getValue<CloudAnchor>() })
+          out.onSuccess(if (it.value == null) emptyList() else it.children.mapNotNull { it.getValue<BaseCloudAnchor<CloudBleDevice>>() })
         }
         .addOnFailureListener { out.onError(it) }
     }
@@ -42,7 +45,7 @@ class CloudAnchorDataSource @Inject constructor() {
             out.onError(Throwable("Duplicate Anchor exists"))
             return@addOnSuccessListener
           }
-          anchorDb.child(address)
+          anchorDb.child(address).child("data")
             .updateChildren(mapOf("id" to id, "room" to room, "type" to type))
             .addOnSuccessListener { out.onComplete() }
             .addOnFailureListener { out.onError(it) }
@@ -53,14 +56,37 @@ class CloudAnchorDataSource @Inject constructor() {
     }
   }
 
-  fun createNewAddress(address: String, data: List<CloudAnchorNodeData>): Completable {
+  fun createNewAddress(address: String, data: List<CloudBleDeviceData>): Completable {
     return Completable.create { out ->
       anchorDb.child(address)
-        .setValue(CloudAnchor(address = address, createdAt = DATE_FORMAT.format(Date()), data = data))
+        .setValue(CloudBleDevice(address = address, createdAt = DATE_FORMAT.format(Date()), data = data))
         .addOnSuccessListener { out.onComplete() }
         .addOnFailureListener { out.onError(it) }
     }
   }
+
+  fun registerNewCloudedDevice(id: String, address: String, room: Int, type: String) {
+    Completable.create { out ->
+      val newData = BaseCloudAnchor(
+        id = id,
+        createdAt = DATE_FORMAT.format(Date()),
+        lifetime = 1,
+        room = room,
+        data = CloudBleDevice(
+          address = address,
+          type = type,
+          data = listOf(),
+          status = DeviceStatus.GOOD,
+        )
+      )
+      anchorDb.child(id)
+        .setValue(newData)
+        .addOnSuccessListener { out.onComplete() }
+        .addOnFailureListener { out.onError(it) }
+    }
+  }
+
+
 
   fun deleteCloudAnchor(address: String): Completable {
     return Completable.create { out ->
