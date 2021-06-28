@@ -27,7 +27,10 @@ class NodeManageRecyclerViewAdapter @Inject constructor(@ActivityContext private
     fun onClickItem() {
       Logger.d(data)
       (context as? NodeManageActivity)?.let {
-        it.startActivityForResult(Intent(it, NodeEditActivity::class.java).apply { putExtra("anchor", this@NodeManageItem.data) }, 100)
+        it.startActivityForResult(
+          Intent(it, NodeEditActivity::class.java).apply { putExtra("anchor", this@NodeManageItem.data) },
+          100
+        )
       }
     }
   }

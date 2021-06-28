@@ -88,6 +88,7 @@
             android:src="@drawable/ic_add"
             app:backgroundTint="@color/purple_500"
             app:tint="@color/white"
+            tools:translationY="-250dp"
             android:layout_marginBottom="20dp"
             android:layout_marginEnd="20dp" />
 
@@ -96,6 +97,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|right"
+            tools:translationY="0dp"
             android:translationY="250dp"
             android:layout_marginRight="20dp"
             >
@@ -110,41 +112,17 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 />
 
-            <ImageView
-                android:id="@+id/addable_node_1"
-                android:layout_width="58dp"
-                android:layout_height="58dp"
-                android:src="@drawable/img_solar_node"
-                android:padding="4dp"
-                android:background="@drawable/bg_circle_grey_stroke_1"
+            <androidx.recyclerview.widget.RecyclerView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
                 app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="15dp"/>
-
-            <ImageView
-                android:id="@+id/addable_node_2"
-                android:layout_width="58dp"
-                android:layout_height="58dp"
-                android:src="@drawable/img_solar_node"
-                android:padding="4dp"
-                android:background="@drawable/bg_circle_grey_stroke_1"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/addable_node_1"
-                android:layout_marginTop="15dp"/>
-
-            <ImageView
-                android:id="@+id/addable_node_3"
-                android:layout_width="58dp"
-                android:layout_height="58dp"
-                android:src="@drawable/img_solar_node"
-                android:padding="4dp"
-                android:background="@drawable/bg_circle_grey_stroke_1"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/addable_node_2"
-                android:layout_marginTop="15dp"/>
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_addable_node"
+                tools:itemCount="3"
+                android:id="@+id/rv_addable_nodes" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>

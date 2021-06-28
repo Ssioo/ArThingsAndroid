@@ -81,15 +81,6 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
     binding.btnRefresh.setOnClickListener { onClickRefresh() }
     binding.btnAdd.setOnClickListener { onClickAddNode() }
     binding.btnRender.setOnClickListener { findNodeAreas() }
-    binding.addableNode1.setOnClickListener {
-
-    }
-    binding.addableNode2.setOnClickListener {
-
-    }
-    binding.addableNode3.setOnClickListener {
-
-    }
 
     vm.isDepthApiEnabled.value = cameraManager.cameraIdList.any {
       cameraManager.getCameraCharacteristics(it)

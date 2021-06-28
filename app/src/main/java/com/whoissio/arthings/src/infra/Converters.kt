@@ -1,11 +1,13 @@
 package com.whoissio.arthings.src.infra
 
 import android.content.Context
+import android.graphics.drawable.Drawable
 import android.util.TypedValue
 import android.view.Surface
 import com.google.ar.core.Pose
 import com.orhanobut.logger.Logger
 import com.whoissio.arthings.src.models.Device
+import com.whoissio.arthings.src.models.DeviceStatus
 import com.whoissio.arthings.src.models.RssiTimeStamp
 import kotlin.math.pow
 import kotlin.math.sqrt
