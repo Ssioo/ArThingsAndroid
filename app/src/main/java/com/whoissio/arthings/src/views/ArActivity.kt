@@ -14,6 +14,7 @@ import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.assets.RenderableSource
 import com.google.ar.sceneform.math.Vector3
 import com.google.ar.sceneform.rendering.ModelRenderable
+import com.google.ar.sceneform.rendering.PlaneRenderer
 import com.google.ar.sceneform.rendering.ShapeFactory
 import com.google.ar.sceneform.rendering.ViewRenderable
 import com.google.ar.sceneform.ux.BaseArFragment
@@ -193,41 +194,48 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
     }
     val targetBleAddr = readyToUploadBles.first().first.address
     Logger.d(targetBleAddr)
-    acquireConfidenceImage()
-    arRendererProvider.nodeChoiceRenderer
-      .thenAccept { addArChoiceViewToScene(anchor, it, targetBleAddr) }
-      .exceptionally { onRenderError(it) }
-    /*when (countTemp) {
+    // acquireConfidenceImage()
+    when (countTemp) {
       1 -> {
         // 빨강
-        arRendererProvider.getPlaneRenderer(1f, 0f, 0f, 0.1f)
+        arRendererProvider.getMaterialRenderer(1f, 0f, 0f, 0.1f)
           .thenAccept {
             val parentNode = AnchorNode(anchor).apply {
               setParent(arFragment.arSceneView.scene)
             }
             AnchorNode(anchor).apply {
-              this.renderable = ShapeFactory.makeSphere(Math.random().div(3).toFloat(), Vector3(0.0f, 0.0f, 0.0f), it)
+              this.renderable = ShapeFactory.makeSphere(0.1f, Vector3(0.0f, 0.0f, 0.0f), it)
               setParent(parentNode)
             }
-
           }
-        countTemp += 1
       }
-      else -> {
+      2 -> {
         // 초록
-        arRendererProvider.getPlaneRenderer(0f, 1f, 0f, 0.1f)
+        arRendererProvider.getMaterialRenderer(0f, 1f, 0f, 0.1f)
           .thenAccept {
             val parentNode = AnchorNode(anchor).apply {
               setParent(arFragment.arSceneView.scene)
             }
             AnchorNode(anchor).apply {
-              this.renderable = ShapeFactory.makeSphere(Math.random().div(2).toFloat(), Vector3(0.0f, 0.15f, 0.0f), it)
+              this.renderable = ShapeFactory.makeSphere(0.3f, Vector3(0.0f, 0.15f, 0.0f), it)
               setParent(parentNode)
             }
           }
       }
-    }*/
-
+      3 -> {
+        createArBleNode(anchor, arRendererProvider.gltfSolar to GLTF_SOLAR_PATH, targetBleAddr, "SOLAR")
+      }
+      4 -> {
+        arRendererProvider.nodeChoiceRenderer
+          .thenAccept { addArChoiceViewToScene(anchor, it, targetBleAddr) }
+          .exceptionally { onRenderError(it) }
+      }
+      5 -> {
+        createArBleNode(anchor, arRendererProvider.gltfSolar to GLTF_SOLAR_PATH, targetBleAddr, "SOLAR")
+        
+      }
+    }
+    countTemp += 1
   }
 
   override fun onSessionInitialization(session: Session?) {
@@ -337,7 +345,7 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
           .exceptionally { onRenderError(it) }
         if (targetAnchor.id.isEmpty()) uploadAnchorToTargetAddr(anchor, targetBleAddr, type)
 
-        /*ModelRenderable.builder()
+        ModelRenderable.builder()
           .setRegistryId(Constants.GLTF_EXCLAMATION_PATH)
           .setSource(this, arRendererProvider.gltfExclamation)
           .build()
@@ -347,7 +355,7 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
               this.renderable = it
               setParent(anchorNode)
             }
-          }*/
+          }
       }
       .exceptionally { onRenderError(it) }
   }

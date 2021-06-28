@@ -49,7 +49,7 @@ class ArRendererProvider @Inject constructor(@ActivityContext val context: Conte
       .build()
   }
 
-  fun getPlaneRenderer(r: Float, g: Float, b: Float, a: Float): CompletableFuture<Material> {
+  fun getMaterialRenderer(r: Float, g: Float, b: Float, a: Float): CompletableFuture<Material> {
     return MaterialFactory.makeTransparentWithColor(context, Color().apply { set(r, g, b, a) })
   }
 }
