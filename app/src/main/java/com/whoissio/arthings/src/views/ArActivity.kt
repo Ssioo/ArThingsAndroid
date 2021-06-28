@@ -62,18 +62,21 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
   private val cameraManager by lazy { getSystemService(CAMERA_SERVICE) as CameraManager }
 
   override fun initView(savedInstanceState: Bundle?) {
+    /* AR CORE APK 있는지, Permission 부여되었는지 검사 */
     if (!hasPermissions()) {
       return if (shouldShowAnyRequestPermissionRationales()) launchPermissionSettings()
       else requestPermissions(PERMISSION_ARRAY, PERMISSION_REQUEST_CODE)
     }
     if (!hasValidARCoreAndUpToDate()) return
+
+    /* AR Plane 초기화 */
     arFragment.apply {
       setOnSessionInitializationListener(this@ArActivity)
       setOnTapArPlaneListener(this@ArActivity)
       arSceneView.scene.addOnUpdateListener { cloudAnchorManager.onUpdate() }
     }
 
-    binding.btnExport.setOnClickListener { onClickBtnExport() }
+    binding.btnExport.setOnClickListener { onClickBtnExport() } // BLE 데이터 내보내기 테스트 21.03.24
     binding.btnRefresh.setOnClickListener { onClickRefresh() }
     binding.btnAdd.setOnClickListener { onClickAddNode() }
     binding.btnRender.setOnClickListener { findNodeAreas() }
