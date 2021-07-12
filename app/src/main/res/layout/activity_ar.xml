@@ -26,11 +26,23 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="#FFF"
+            android:id="@+id/tv_tof"
             tools:text="[ DEPTH: ToF ]"
             android:text="@{vm.isDepthApiEnabled ? `[ DEPTH: ToF ]` : `[ DEPTH: SLAM ]`}"
             android:textStyle="bold"
             android:layout_gravity="center|top"
             android:layout_marginTop="10dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FFF"
+            tools:text="[ DEPTH: ToF ]"
+            android:text=""
+            android:id="@+id/tv_pointclouds"
+            android:textStyle="bold"
+            android:layout_gravity="center|top"
+            android:layout_marginTop="40dp" />
 
         <include
             android:visibility="@{vm.closestScannedDevice != null ? View.VISIBLE : View.GONE}"

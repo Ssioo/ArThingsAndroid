@@ -32,7 +32,7 @@ object Constants {
     const val GLTF_RF_SCALE = 0.003f
     const val GLTF_EXCLAMATION_SCALE = 1f
 
-    const val CLOUD_ANCHOR_BASE_URL = "https://arcorecloudanchor.googleapis.com"
+    const val BASE_URL = "https://arcorecloudanchor.googleapis.com"
 
     val DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, Locale.ENGLISH)
 }

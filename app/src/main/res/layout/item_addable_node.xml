@@ -6,14 +6,16 @@
     <data>
         <variable
             name="item"
-            type="com.whoissio.arthings.src.models.DeviceNode" />
+            type="com.whoissio.arthings.src.views.adapters.AddableDevicesAdapter.DeviceNodeItem" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="54dp"
         android:layout_height="54dp"
         android:layout_marginTop="5dp"
-        android:layout_marginBottom="5dp">
+        android:layout_marginBottom="5dp"
+        android:onClick="@{() -> item.onClick()}"
+        >
 
         <ImageView
             android:layout_width="match_parent"
@@ -22,10 +24,10 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
-            tools:src="@drawable/img_solar_node"
-            device_node="@{item}"
+            device_node="@{item.data}"
             android:contentDescription="@null"
             android:padding="8dp"
+            tools:src="@drawable/img_solar_node"
             tools:background="@drawable/bg_ring_red"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

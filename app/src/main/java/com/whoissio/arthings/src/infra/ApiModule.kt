@@ -1,6 +1,6 @@
 package com.whoissio.arthings.src.infra
 
-import com.whoissio.arthings.src.infra.Constants.CLOUD_ANCHOR_BASE_URL
+import com.whoissio.arthings.src.infra.Constants.BASE_URL
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -17,13 +17,13 @@ object ApiModule {
 
   @Provides
   fun okHttpClient(): OkHttpClient = OkHttpClient.Builder()
-    .callTimeout(8000, TimeUnit.MILLISECONDS)
-    .connectTimeout(8000, TimeUnit.MILLISECONDS)
+    .callTimeout(10000, TimeUnit.MILLISECONDS)
+    .connectTimeout(10000, TimeUnit.MILLISECONDS)
     .build()
 
   @Provides
   fun retrofit(): Retrofit = Retrofit.Builder()
-      .baseUrl(CLOUD_ANCHOR_BASE_URL)
+      .baseUrl(BASE_URL)
       .addConverterFactory(GsonConverterFactory.create())
       .addCallAdapterFactory(RxJava3CallAdapterFactory.createAsync())
       .client(okHttpClient())

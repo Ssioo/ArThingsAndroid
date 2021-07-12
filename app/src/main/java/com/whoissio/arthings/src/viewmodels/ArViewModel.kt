@@ -16,10 +16,7 @@ import com.whoissio.arthings.src.infra.Helper.combine
 import com.whoissio.arthings.src.infra.Helper.randomBleRecordGenerator
 import com.whoissio.arthings.src.infra.core.MockFunction
 import com.whoissio.arthings.src.infra.utils.BleSignalScanner
-import com.whoissio.arthings.src.models.BaseEvent
-import com.whoissio.arthings.src.models.CloudAnchor
-import com.whoissio.arthings.src.models.Device
-import com.whoissio.arthings.src.models.RssiTimeStamp
+import com.whoissio.arthings.src.models.*
 import com.whoissio.arthings.src.repositories.CloudedAnchorRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.reactivex.rxjava3.kotlin.addTo
@@ -58,6 +55,8 @@ class ArViewModel @Inject constructor(
   val notUploadedBleData = scannedDevicesDataSortedByDistance.combine(cloudedAnchors) { src, indices ->
     src?.filter { indices?.filter { it.id.isNotEmpty() }?.map { it.address }?.contains(it.first.address) == false } ?: listOf()
   }
+
+  val selectedDeviceNode: MutableLiveData<DeviceNode?> = MutableLiveData(null)
 
   @SuppressLint("NewApi")
   fun resumeScanBle() {

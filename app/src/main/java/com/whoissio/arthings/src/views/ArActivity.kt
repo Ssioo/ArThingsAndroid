@@ -13,8 +13,8 @@ import com.google.ar.core.*
 import com.google.ar.sceneform.AnchorNode
 import com.google.ar.sceneform.assets.RenderableSource
 import com.google.ar.sceneform.math.Vector3
+import com.google.ar.sceneform.rendering.Material
 import com.google.ar.sceneform.rendering.ModelRenderable
-import com.google.ar.sceneform.rendering.PlaneRenderer
 import com.google.ar.sceneform.rendering.ShapeFactory
 import com.google.ar.sceneform.rendering.ViewRenderable
 import com.google.ar.sceneform.ux.BaseArFragment
@@ -38,13 +38,18 @@ import com.whoissio.arthings.src.infra.Helper.parseFunction
 import com.whoissio.arthings.src.infra.Helper.shouldShowAnyRequestPermissionRationales
 import com.whoissio.arthings.src.infra.core.MockFunction
 import com.whoissio.arthings.src.infra.utils.*
+import com.whoissio.arthings.src.models.ARCoord
 import com.whoissio.arthings.src.models.DeviceInfo
 import com.whoissio.arthings.src.viewmodels.ArViewModel
 import com.whoissio.arthings.src.views.components.MyArFragment
 import com.whoissio.arthings.src.views.components.NodeChoiceView
 import com.whoissio.arthings.src.views.components.NodeInfoView
 import dagger.hilt.android.AndroidEntryPoint
+import java.io.BufferedWriter
+import java.io.FileOutputStream
+import java.io.OutputStreamWriter
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -62,6 +67,10 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
   private var nodeChoiceAnchorNode: AnchorNode = AnchorNode()
   private val cameraManager by lazy { getSystemService(CAMERA_SERVICE) as CameraManager }
 
+  val pointCloudHashMap: ConcurrentHashMap<Int, Pair<ARCoord, Float>> = ConcurrentHashMap()
+
+  var whiteSphere: Material? = null
+
   override fun initView(savedInstanceState: Bundle?) {
     /* AR CORE APK 있는지, Permission 부여되었는지 검사 */
     if (!hasPermissions()) {
@@ -70,17 +79,74 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
     }
     if (!hasValidARCoreAndUpToDate()) return
 
+    arRendererProvider.getMaterialRenderer(1f, 1f, 1f, 0.2f)
+      .thenAccept { whiteSphere = it }
+
     /* AR Plane 초기화 */
     arFragment.apply {
       setOnSessionInitializationListener(this@ArActivity)
       setOnTapArPlaneListener(this@ArActivity)
-      arSceneView.scene.addOnUpdateListener { cloudAnchorManager.onUpdate() }
+      arSceneView.scene.addOnUpdateListener {
+        cloudAnchorManager.onUpdate()
+        whiteSphere ?: return@addOnUpdateListener
+        val pointClouds = arSceneView.arFrame?.acquirePointCloud()
+        pointClouds?.use {
+          val points = it.points
+          val ids = it.ids
+          try {
+            while (true) {
+              val id = ids.get()
+              val x = points.get()
+              val y = points.get()
+              val z = points.get()
+              val conf = points.get()
+              if (conf < 0.5f) continue
+              val existingPointCloud = pointCloudHashMap.get(id)
+              val pose = Pose.makeTranslation(x, y, z)
+              if (existingPointCloud == null) {
+                pointCloudHashMap.put(id, Triple(pose.tx(), pose.ty(), pose.tz()) to conf)
+              } else {
+                pointCloudHashMap.replace(id, Triple(pose.tx(), pose.ty(), pose.tz()) to conf)
+              }
+            }
+          } catch (e: Exception) {
+            binding.tvPointclouds.setText("PointCloud: ${pointCloudHashMap.size} 개")
+          }
+        }
+      }
     }
 
     binding.btnExport.setOnClickListener { onClickBtnExport() } // BLE 데이터 내보내기 테스트 21.03.24
     binding.btnRefresh.setOnClickListener { onClickRefresh() }
     binding.btnAdd.setOnClickListener { onClickAddNode() }
-    binding.btnRender.setOnClickListener { findNodeAreas() }
+    binding.btnRender.setOnClickListener {
+
+      val contents = "{" + pointCloudHashMap.toSortedMap().map { e ->
+        e.value?.let {
+          "\"${e.key}\": {\"x\": ${it.first.first}, \"y\": ${it.first.second}, \"z\": ${it.first.third}, \"c\": ${it.second}}"
+        } ?: throw Exception("No $e pose")
+      }.joinToString(",") + "}"
+      try {
+        val fos = FileOutputStream("${filesDir.absolutePath}/${Date().time}.txt", true)
+        val writer = BufferedWriter(OutputStreamWriter(fos))
+        writer.write(contents)
+        writer.flush()
+        writer.close()
+        fos.close()
+        showToast("Success to save")
+      } catch (e: Exception) {
+        e.printStackTrace()
+        showToast("Fail to save")
+      }
+      /*startActivity(
+        Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+          putExtra(Intent.EXTRA_TITLE, "${pointCloudHashMap.size}개의 PointCloud 데이터 전송")
+          putExtra(Intent.EXTRA_TEXT, contents)
+          type = "text/plain"
+        }, null)
+      )*/
+      // findNodeAreas()
+    }
 
     vm.isDepthApiEnabled.value = cameraManager.cameraIdList.any {
       cameraManager.getCameraCharacteristics(it)
@@ -88,18 +154,22 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
         ?.contains(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) == true
     }
     vm.isAddableOpen.observe(this, this::onChangeNodeAddable)
+    vm.selectedDeviceNode.observe(this) {
+
+    }
   }
 
   private fun findNodeAreas() {
     /* 화면 프레임으로부터 NodeArea 획득한 후 render*/
-    showProgress()
+
+    /*showProgress()
     binding.root.postDelayed({
       val frame = arFragment.arSceneView.session?.update()
       acquireNodeArea(frame).forEach {
         renderNodeAreaOverlayOn(it, frame)
       }
       hideProgress()
-    }, if (BuildConfig.DEBUG) 1000 else 5000)
+    }, if (BuildConfig.DEBUG) 1000 else 5000)*/
   }
 
   /* 화면 프레임에서 중요 영역을 뽑아 냄 */
@@ -175,7 +245,7 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
 
   override fun onTapPlane(hitResult: HitResult?, plane: Plane?, motionEvent: MotionEvent?) {
     val anchor = hitResult?.createAnchor() ?: return
-    val scannedBles = vm.scannedDevicesDataSortedByDistance.value ?: emptyList()
+    /*val scannedBles = vm.scannedDevicesDataSortedByDistance.value ?: emptyList()
     val readyToUploadBles = vm.notUploadedBleData.value ?: emptyList()
     if (scannedBles.isEmpty()) {
       return showAlert("Scan nearby ble nodes before registering an AR node")
@@ -183,9 +253,15 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
     if (readyToUploadBles.isEmpty()) {
       return showAlert("No more node to be uploaded, check your node list")
     }
-    val targetBleAddr = readyToUploadBles.first().first.address
-    Logger.d(targetBleAddr)
+    val targetBleAddr = readyToUploadBles.first().first.address*/
+    // Logger.d(targetBleAddr)
     // acquireConfidenceImage()
+    val selectedDevice = vm.selectedDeviceNode.value
+    if (selectedDevice != null) {
+      //createArBleNode(anchor, )
+      return
+    }
+
     when (countTemp) {
       1 -> {
         // 빨강
@@ -214,15 +290,15 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
           }
       }
       3 -> {
-        createArBleNode(anchor, arRendererProvider.gltfSolar to GLTF_SOLAR_PATH, targetBleAddr, "SOLAR")
+        createArBleNode(anchor, arRendererProvider.gltfSolar to GLTF_SOLAR_PATH, "", "SOLAR")
       }
       4 -> {
         arRendererProvider.nodeChoiceRenderer
-          .thenAccept { addArChoiceViewToScene(anchor, it, targetBleAddr) }
+          .thenAccept { addArChoiceViewToScene(anchor, it, "") }
           .exceptionally { onRenderError(it) }
       }
       5 -> {
-        createArBleNode(anchor, arRendererProvider.gltfSolar to GLTF_SOLAR_PATH, targetBleAddr, "SOLAR")
+        createArBleNode(anchor, arRendererProvider.gltfSolar to GLTF_SOLAR_PATH, "", "SOLAR")
         
       }
     }

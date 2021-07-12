@@ -3,6 +3,7 @@ package com.whoissio.arthings.src.models
 import java.util.*
 
 typealias RssiTimeStamp = Map<Long, Int>
+typealias ARCoord = Triple<Float, Float, Float>
 
 enum class ChartMode {
   RAW,
