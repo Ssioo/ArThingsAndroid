@@ -305,6 +305,7 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
     countTemp += 1
   }
 
+  // AR 세션 초기화되고 처음 실행될 구문.
   override fun onSessionInitialization(session: Session?) {
     vm.cloudedAnchors.observe(this) {
       it.filter { it.id.isNotEmpty() && it.room == 1 }
@@ -459,6 +460,7 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
     return null
   }
 
+  // ARCoreAPK 설치 여부 검색
   private fun hasValidARCoreAndUpToDate(): Boolean =
     when (ArCoreApk.getInstance().checkAvailability(this)) {
       ArCoreApk.Availability.SUPPORTED_INSTALLED -> true
