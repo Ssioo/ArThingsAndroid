@@ -37,12 +37,21 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="#FFF"
-            tools:text="[ DEPTH: ToF ]"
             android:text=""
             android:id="@+id/tv_pointclouds"
             android:textStyle="bold"
             android:layout_gravity="center|top"
             android:layout_marginTop="40dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FFF"
+            android:text=""
+            android:id="@+id/tv_depth_pointclouds"
+            android:textStyle="bold"
+            android:layout_gravity="center|top"
+            android:layout_marginTop="70dp" />
 
         <include
             android:visibility="@{vm.closestScannedDevice != null ? View.VISIBLE : View.GONE}"
@@ -110,6 +119,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|right"
             tools:translationY="0dp"
+            android:visibility="gone"
             android:translationY="250dp"
             android:layout_marginRight="20dp"
             >
@@ -137,5 +147,11 @@
                 android:id="@+id/rv_addable_nodes" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <ImageView
+            android:id="@+id/iv_depth_image"
+            android:layout_width="160dp"
+            android:layout_height="300dp"
+            android:layout_gravity="bottom|right"/>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>

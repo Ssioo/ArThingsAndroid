@@ -68,8 +68,11 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
   private val cameraManager by lazy { getSystemService(CAMERA_SERVICE) as CameraManager }
 
   val pointCloudHashMap: ConcurrentHashMap<Int, Pair<ARCoord, Float>> = ConcurrentHashMap()
+  val depthPointCloudSet: MutableSet<Pair<ARCoord, Float>> = mutableSetOf()
 
   var whiteSphere: Material? = null
+
+  var skipFrameCnt: Int = 0
 
   override fun initView(savedInstanceState: Bundle?) {
     /* AR CORE APK 있는지, Permission 부여되었는지 검사 */
@@ -89,7 +92,8 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
       arSceneView.scene.addOnUpdateListener {
         cloudAnchorManager.onUpdate()
         whiteSphere ?: return@addOnUpdateListener
-        val pointClouds = arSceneView.arFrame?.acquirePointCloud()
+        val frame = arSceneView.arFrame
+        val pointClouds = frame?.acquirePointCloud()
         pointClouds?.use {
           val points = it.points
           val ids = it.ids
@@ -113,6 +117,25 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
             binding.tvPointclouds.setText("PointCloud: ${pointCloudHashMap.size} 개")
           }
         }
+        if (frame?.camera?.trackingState != TrackingState.TRACKING) return@addOnUpdateListener
+        skipFrameCnt++
+        if (skipFrameCnt.mod(30) != 0) return@addOnUpdateListener
+        val depthData = DepthDataManager.create(frame, frame.camera?.pose)
+        if (depthData == null) {
+          Logger.d("Depth Data is Null")
+          return@addOnUpdateListener
+        }
+        try {
+          while (true) {
+            val x = depthData.get()
+            val y = depthData.get()
+            val z = depthData.get()
+            val conf = depthData.get()
+            depthPointCloudSet.add(Triple(x, y, z) to conf)
+          }
+        } catch (e: Exception) {
+          binding.tvDepthPointclouds.setText("DepthPointCloud: ${depthPointCloudSet.size} 개")
+        }
       }
     }
 
@@ -126,13 +149,22 @@ class  ArActivity : BaseActivity.DBActivity<ActivityArBinding, ArViewModel>(R.la
           "\"${e.key}\": {\"x\": ${it.first.first}, \"y\": ${it.first.second}, \"z\": ${it.first.third}, \"c\": ${it.second}}"
         } ?: throw Exception("No $e pose")
       }.joinToString(",") + "}"
+      val depthContents = "{" + depthPointCloudSet.mapIndexed { idx, e ->
+        "\"$idx\": {\"x\": ${e.first.first}, \"y\": ${e.first.second}, \"z\": ${e.first.third}, \"c\": ${e.second}}"
+      }.joinToString(",") + "}"
       try {
         val fos = FileOutputStream("${filesDir.absolutePath}/${Date().time}.txt", true)
+        val dfos = FileOutputStream("${filesDir.absolutePath}/${Date().time}_depth.txt", true)
         val writer = BufferedWriter(OutputStreamWriter(fos))
+        val dwriter = BufferedWriter(OutputStreamWriter(dfos))
         writer.write(contents)
+        dwriter.write(depthContents)
         writer.flush()
+        dwriter.flush()
         writer.close()
+        dwriter.close()
         fos.close()
+        dfos.close()
         showToast("Success to save")
       } catch (e: Exception) {
         e.printStackTrace()
