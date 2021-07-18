@@ -113,7 +113,7 @@ class DepthDataManager {
               + x * confidenceImagePlane.pixelStride
           )
           val confidenceNormalized = ((confidencePixelValue and 0xff.toByte()).toFloat()) / 255.0f
-          if (confidenceNormalized < 0.1/* || depthMeters > 1.5*/) {
+          if (confidenceNormalized < 0.3 || depthMeters > 8) {
             // Ignores "low-confidence" pixels.
             x += step
             continue
